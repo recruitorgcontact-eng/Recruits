@@ -1,0 +1,6 @@
+{
+  "name": "Arohi Career AI - Recruit.org.in",
+  "description": "The Intelligent Career & Hiring Companion on Recruits.org.in featuring role-based candidate/recruiter authentication, live job crawling across India, and 100% free recruiter job posting facility.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
