@@ -56,7 +56,12 @@ import {
 import { UserRoleMode, LanguageCode } from "../types";
 import { speakText, stopSpeech, isOdiaText } from "../utils/speech";
 import { CareerSuccessWall } from "./CareerSuccessWall";
-import { Cinematic3DExperience } from "./Cinematic3DExperience";
+import {
+  OFFICIAL_10_TRAINING_PROGRAMS,
+  PLACEMENT_SECTORS,
+  OFFICIAL_POSTERS,
+} from "./engines/LearningAdvisorEngine";
+import { CompanyBrandLogo, FEATURED_MNC_BRANDS } from "./CompanyBrandLogo";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -170,18 +175,13 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
 }) => {
   const [isPlayingVoiceDemo, setIsPlayingVoiceDemo] = useState(false);
   const [demoVoiceLang, setDemoVoiceLang] = useState<LanguageCode>("or");
-  const [show3DCinematic, setShow3DCinematic] = useState<boolean>(true);
-  const [cityScrollProgress, setCityScrollProgress] = useState<number>(0);
 
-  // GSAP ScrollTrigger Refs for Top-to-Bottom Cinematic Transition
+  // GSAP ScrollTrigger Refs
   const landingRootRef = useRef<HTMLDivElement | null>(null);
   const heroSectionRef = useRef<HTMLElement | null>(null);
   const heroTitleRef = useRef<HTMLDivElement | null>(null);
   const heroGridRef = useRef<HTMLDivElement | null>(null);
   const heroStatsRef = useRef<HTMLDivElement | null>(null);
-  const transitionHorizonRef = useRef<HTMLDivElement | null>(null);
-  const careerCitySectionRef = useRef<HTMLElement | null>(null);
-  const careerCityViewportRef = useRef<HTMLDivElement | null>(null);
 
   // Search Bar State
   const [searchQuery, setSearchQuery] = useState("");
@@ -304,6 +304,61 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
     }
   };
 
+  const heroResumeInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingHeroResume, setIsUploadingHeroResume] = useState(false);
+
+  const handleLaunchJobSearchWithFilter = (opts: {
+    query?: string;
+    sector?: string;
+    category?: string;
+    location?: string;
+  }) => {
+    try {
+      sessionStorage.setItem("arohi_job_search_handoff", JSON.stringify(opts));
+    } catch (e) {
+      // ignore storage errors
+    }
+    onEnterWorkspace("liveindiajobs");
+  };
+
+  const handleHeroResumeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingHeroResume(true);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const resultStr = String(reader.result || "");
+        const base64Data = resultStr.includes(",") ? resultStr.split(",")[1] : resultStr;
+        const res = await fetch("/api/ai/parse-resume-file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: file.name,
+            mimeType: file.type || "application/pdf",
+            base64Data,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          sessionStorage.setItem(
+            "arohi_uploaded_resume_payload",
+            JSON.stringify({ data, fileName: file.name })
+          );
+        }
+      } catch (err) {
+        console.error("Hero resume upload error:", err);
+      } finally {
+        setIsUploadingHeroResume(false);
+        if (heroResumeInputRef.current) heroResumeInputRef.current.value = "";
+        onEnterWorkspace("resume");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   useEffect(() => {
     fetchPulseData("All");
   }, []);
@@ -356,61 +411,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
         }
       }
 
-      // 2. Cinematic Portal Horizon Bridge Expansion
-      if (transitionHorizonRef.current) {
-        gsap.fromTo(
-          transitionHorizonRef.current,
-          { opacity: 0.5, scale: 0.94, y: 24 },
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: transitionHorizonRef.current,
-              start: "top 90%",
-              end: "center 55%",
-              scrub: 0.5,
-            },
-          }
-        );
-      }
-
-      // 3. Seamless Entry & Camera Flythrough Scrub for the Interactive 3D Career City
-      if (show3DCinematic && careerCitySectionRef.current && careerCityViewportRef.current) {
-        gsap.fromTo(
-          careerCityViewportRef.current,
-          {
-            scale: 0.92,
-            y: 56,
-            opacity: 0.65,
-          },
-          {
-            scale: 1,
-            y: 0,
-            opacity: 1,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: careerCitySectionRef.current,
-              start: "top 88%",
-              end: "top 25%",
-              scrub: 0.6,
-            },
-          }
-        );
-
-        ScrollTrigger.create({
-          trigger: careerCitySectionRef.current,
-          start: "top 65%",
-          end: "bottom 20%",
-          scrub: 0.5,
-          onUpdate: (self) => {
-            setCityScrollProgress(self.progress);
-          },
-        });
-      }
-
-      // 4. Progressive ScrollTrigger Reveal for Downstream Landing Page Sections
+      // Progressive ScrollTrigger Reveal for Downstream Landing Page Sections
       const scrollSections = gsap.utils.toArray<HTMLElement>(".gsap-scroll-section");
       scrollSections.forEach((sec) => {
         gsap.fromTo(
@@ -435,7 +436,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
     return () => {
       ctx.revert();
     };
-  }, [show3DCinematic]);
+  }, []);
 
   const handleReadArticleSummary = (article: any) => {
     if (activeReadingId === article.id) {
@@ -597,17 +598,93 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
     <div ref={landingRootRef} className="space-y-12 pb-16">
       {/* HERO SECTION MATCHING MOCKUP WITH GSAP PARALLAX */}
       <section ref={heroSectionRef} className="space-y-8 will-change-transform">
-        {/* HERO HEADER */}
-        <div ref={heroTitleRef} className="text-center space-y-2 pt-2 will-change-transform">
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-blue-600 tracking-tight">
-            RECRUIT
-          </h1>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-            India's Smartest Job Search Engine
-          </h2>
-          <p className="text-sm sm:text-base text-slate-600 font-medium">
-            Find Jobs. Hire Talent. Build Careers. Powered by Artificial Intelligence.
-          </p>
+        {/* HERO HEADER + HIGH-VISIBILITY REAL CAREER PHOTOGRAPHY SHOWCASE */}
+        <div ref={heroTitleRef} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch pt-2 will-change-transform">
+          {/* Left 7 Cols: Brand Headline & Value Proposition */}
+          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-5 text-left">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-200/80 text-indigo-800 text-[11px] font-bold px-3.5 py-1 rounded-full">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>
+                  Powered by{" "}
+                  <a
+                    href="https://arohiai.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-700 underline font-extrabold hover:text-indigo-900"
+                  >
+                    arohiai.com
+                  </a>{" "}
+                  • Quench Research Labs Private Limited
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-blue-600 tracking-tight leading-none">
+                  RECRUITS.ORG.IN
+                </h1>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
+                  India&apos;s Smartest AI Job Search, Skilling &amp; Campus Placement Hub
+                </h2>
+              </div>
+
+              <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed max-w-2xl">
+                Connect directly with verified Government vacancies (UPSC, SSC, OPSC, Railways, Banking), Top MNC career drives (Tata, Infosys, Wipro, HDFC Bank, Reliance, Tech Mahindra), and 10 Industry-Ready Training Programs with 100% Placement Assistance.
+              </p>
+            </div>
+
+            {/* Quick Proof Metrics Row */}
+            <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+              <div>
+                <span className="text-lg sm:text-xl font-black text-blue-600 tabular-nums block">100,000+</span>
+                <span className="text-[11px] text-slate-500 font-semibold">Verified Live Jobs</span>
+              </div>
+              <div>
+                <span className="text-lg sm:text-xl font-black text-emerald-600 tabular-nums block">100%</span>
+                <span className="text-[11px] text-slate-500 font-semibold">Placement Assistance</span>
+              </div>
+              <div>
+                <span className="text-lg sm:text-xl font-black text-indigo-600 tabular-nums block">10 Programs</span>
+                <span className="text-[11px] text-slate-500 font-semibold">50 Modules Ready Now</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right 5 Cols: Real-World Indian Graduates & Placement Photography Banner */}
+          <div
+            onClick={() => onEnterWorkspace("liveindiajobs")}
+            className="lg:col-span-5 relative rounded-3xl overflow-hidden border border-slate-200/90 shadow-lg group cursor-pointer min-h-[260px] sm:min-h-[300px] bg-slate-900"
+          >
+            <img
+              src="/src/assets/images/hero_career_graduates_1794910021124.jpg"
+              alt="Confident Indian graduates and professionals holding placement offer letters at modern tech park campus"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent" />
+            <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2">
+              <span className="bg-slate-950/80 backdrop-blur-md text-amber-300 border border-amber-400/40 px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider">
+                Learn • Work • Grow
+              </span>
+              <span className="bg-emerald-500/90 text-slate-950 px-2.5 py-1 rounded-lg text-[10px] font-black">
+                2026–27 Drives Open
+              </span>
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 text-white space-y-1.5">
+              <div className="text-xs font-bold text-cyan-300">
+                Real Career Outcomes Across India &amp; Odisha
+              </div>
+              <h3 className="text-base sm:text-lg font-black leading-snug">
+                From Campus Skilling to Top MNC &amp; Government Offer Letters
+              </h3>
+              <div className="flex items-center justify-between text-[11px] text-slate-200 pt-1">
+                <span>Explore Verified Placement Drives &amp; Courses</span>
+                <span className="font-extrabold text-amber-300 flex items-center gap-1">
+                  Enter Hub <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* HERO MAIN CONTENT GRID */}
@@ -626,7 +703,10 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      onEnterWorkspace("liveindiajobs");
+                      handleLaunchJobSearchWithFilter({
+                        query: searchQuery,
+                        location: searchLocation || undefined,
+                      });
                     }
                   }}
                   placeholder="Search Jobs, Companies, Skills or Government Vacancies..."
@@ -663,17 +743,29 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                     <span>Voice</span>
                   </button>
 
+                  <input
+                    ref={heroResumeInputRef}
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx"
+                    onChange={handleHeroResumeFileChange}
+                    className="hidden"
+                  />
                   <button
-                    onClick={() => onEnterWorkspace("resume")}
-                    className="flex items-center gap-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
+                    onClick={() => heroResumeInputRef.current?.click()}
+                    disabled={isUploadingHeroResume}
+                    className="flex items-center gap-1 bg-white hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-slate-700 hover:text-purple-700 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-60"
                   >
                     <FileText className="w-3.5 h-3.5 text-purple-600" />
-                    <span>Upload Resume</span>
+                    <span>{isUploadingHeroResume ? "Parsing Resume..." : "Upload Resume"}</span>
                   </button>
 
                   <button
                     onClick={() => {
-                      setSearchLocation("Bhubaneswar / India");
+                      const nextLoc =
+                        searchLocation === "Odisha"
+                          ? "All India"
+                          : "Odisha";
+                      setSearchLocation(nextLoc);
                     }}
                     className="flex items-center gap-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
                   >
@@ -686,7 +778,12 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               {/* ACTION BUTTONS BELOW SEARCH BAR */}
               <div className="flex items-center justify-center gap-3 pt-1">
                 <button
-                  onClick={() => onEnterWorkspace("liveindiajobs")}
+                  onClick={() =>
+                    handleLaunchJobSearchWithFilter({
+                      query: searchQuery,
+                      location: searchLocation || undefined,
+                    })
+                  }
                   className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm px-8 py-2.5 rounded-full shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Search className="w-4 h-4" />
@@ -703,13 +800,13 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
 
                 <button
                   onClick={() => {
-                    setShow3DCinematic(true);
-                    careerCitySectionRef.current?.scrollIntoView({ behavior: "smooth" });
+                    sessionStorage.setItem("arohi_learning_tab_handoff", "classroom");
+                    onEnterWorkspace("learning");
                   }}
-                  className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2.5 rounded-full transition cursor-pointer"
+                  className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-full transition cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  <span>3D Career City ↓</span>
+                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Start 10 Courses Free Preview →</span>
                 </button>
               </div>
             </div>
@@ -747,7 +844,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                     key={tag}
                     onClick={() => {
                       setSearchQuery(tag);
-                      onEnterWorkspace("liveindiajobs");
+                      handleLaunchJobSearchWithFilter({ query: tag });
                     }}
                     className="flex items-center gap-1 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-blue-700 px-3 py-1.5 rounded-full whitespace-nowrap font-semibold transition cursor-pointer"
                   >
@@ -761,26 +858,31 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             {/* 14 CATEGORY GRID CARDS */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {[
-                { title: "Government Jobs", icon: Building, color: "text-blue-600 bg-blue-50 border-blue-200" },
-                { title: "Private Jobs", icon: Briefcase, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-                { title: "Remote Jobs", icon: Globe, color: "text-purple-600 bg-purple-50 border-purple-200" },
-                { title: "Internships", icon: GraduationCap, color: "text-amber-600 bg-amber-50 border-amber-200" },
-                { title: "Walk-ins", icon: UserCheck, color: "text-pink-600 bg-pink-50 border-pink-200" },
-                { title: "Part-time", icon: Clock, color: "text-teal-600 bg-teal-50 border-teal-200" },
-                { title: "Freelance", icon: Zap, color: "text-violet-600 bg-violet-50 border-violet-200" },
-                { title: "IT Jobs", icon: Code, color: "text-cyan-600 bg-cyan-50 border-cyan-200" },
-                { title: "Healthcare", icon: Heart, color: "text-rose-600 bg-rose-50 border-rose-200" },
-                { title: "Engineering", icon: Layers, color: "text-orange-600 bg-orange-50 border-orange-200" },
-                { title: "Banking", icon: Landmark, color: "text-indigo-600 bg-indigo-50 border-indigo-200" },
-                { title: "Mining", icon: Pickaxe, color: "text-amber-700 bg-amber-50 border-amber-200" },
-                { title: "Education", icon: BookOpen, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-                { title: "View All Categories", icon: Grid, color: "text-slate-600 bg-slate-100 border-slate-200" },
+                { title: "Government Jobs", sector: "Government", query: "", icon: Building, color: "text-blue-600 bg-blue-50 border-blue-200" },
+                { title: "Private Jobs", sector: "Private", query: "", icon: Briefcase, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+                { title: "Remote Jobs", sector: "All", query: "Remote", icon: Globe, color: "text-purple-600 bg-purple-50 border-purple-200" },
+                { title: "Internships", sector: "All", query: "Intern", icon: GraduationCap, color: "text-amber-600 bg-amber-50 border-amber-200" },
+                { title: "Walk-ins", sector: "Private", query: "Direct", icon: UserCheck, color: "text-pink-600 bg-pink-50 border-pink-200" },
+                { title: "Part-time", sector: "All", query: "Flexible", icon: Clock, color: "text-teal-600 bg-teal-50 border-teal-200" },
+                { title: "Freelance", sector: "Private", query: "Project", icon: Zap, color: "text-violet-600 bg-violet-50 border-violet-200" },
+                { title: "IT Jobs", sector: "Private", query: "Software", icon: Code, color: "text-cyan-600 bg-cyan-50 border-cyan-200" },
+                { title: "Healthcare", sector: "All", query: "Health", icon: Heart, color: "text-rose-600 bg-rose-50 border-rose-200" },
+                { title: "Engineering", sector: "All", query: "Engineer", icon: Layers, color: "text-orange-600 bg-orange-50 border-orange-200" },
+                { title: "Banking", sector: "Banking", query: "Bank", icon: Landmark, color: "text-indigo-600 bg-indigo-50 border-indigo-200" },
+                { title: "Mining", sector: "All", query: "Mining", icon: Pickaxe, color: "text-amber-700 bg-amber-50 border-amber-200" },
+                { title: "Education", sector: "Government", query: "Teacher", icon: BookOpen, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+                { title: "View All Categories", sector: "All", query: "", icon: Grid, color: "text-slate-600 bg-slate-100 border-slate-200" },
               ].map((cat) => {
                 const IconComponent = cat.icon || Building;
                 return (
                   <button
                     key={cat.title}
-                    onClick={() => onEnterWorkspace("liveindiajobs")}
+                    onClick={() =>
+                      handleLaunchJobSearchWithFilter({
+                        sector: cat.sector,
+                        query: cat.query,
+                      })
+                    }
                     className="bg-white hover:bg-slate-50 p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition text-center flex flex-col items-center justify-center gap-2 group cursor-pointer"
                   >
                     <div className={`p-2.5 rounded-xl border ${cat.color} group-hover:scale-110 transition`}>
@@ -848,6 +950,18 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             >
               <span>Chat with Recruit AI →</span>
             </button>
+
+            <div className="pt-2 border-t border-blue-100 text-center">
+              <a
+                href="https://arohiai.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 hover:underline inline-flex items-center gap-1"
+              >
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                <span>Powered by arohiai.com • Quench Research Labs Pvt. Ltd.</span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -875,51 +989,174 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           </div>
         </div>
 
-        {/* FEATURED COMPANIES ROW */}
+        {/* 4 CONNECTED REAL-WORLD CAREER TRACK VISUAL CARDS */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/90 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-slate-900">
-              Featured Companies
-            </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                Explore Career Pathways by Real Industry &amp; Sector
+              </h3>
+              <p className="text-xs text-slate-500">
+                Connected pathways linking live recruitment drives, AI interview prep, and hands-on training
+              </p>
+            </div>
             <button
-              onClick={() => onEnterWorkspace("jobmatch")}
-              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+              onClick={() => onEnterWorkspace("liveindiajobs")}
+              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer self-start sm:self-auto"
             >
-              View All Companies &gt;
+              Explore All Career Tracks &gt;
             </button>
           </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-3 items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { name: "TATA", font: "font-serif tracking-widest font-black text-slate-900" },
-              { name: "Infosys", font: "font-sans font-black text-blue-600" },
-              { name: "wipro", font: "font-mono font-bold text-purple-600" },
-              { name: "HDFC BANK", font: "font-sans font-extrabold text-slate-900" },
-              { name: "Reliance", font: "font-serif font-black text-red-600" },
-              { name: "Tech Mahindra", font: "font-sans font-black text-red-700" },
-              { name: "amazon", font: "font-sans font-black text-amber-600" },
-              { name: "adani", font: "font-sans font-black text-blue-800" },
-              { name: "L&T", font: "font-serif font-black text-slate-800" },
-            ].map((company) => (
+              {
+                title: "Civil Services & Govt. Administration",
+                subtitle: "UPSC • SSC • OPSC • State Secretariat",
+                stats: "18,400+ Active Posts",
+                img: "/src/assets/images/track_govt_civil_services_1794910022761.jpg",
+                actionLabel: "View Govt. Vacancies",
+                onClick: () => handleLaunchJobSearchWithFilter({ sector: "Government", query: "UPSC" }),
+              },
+              {
+                title: "IT, AI & Data Science MNCs",
+                subtitle: "TCS • Infosys • Wipro • Tech Mahindra",
+                stats: "42,000+ Tech Roles",
+                img: "/src/assets/images/track_it_cloud_ai_lab_1794910024883.jpg",
+                actionLabel: "Browse Tech & AI Jobs",
+                onClick: () => handleLaunchJobSearchWithFilter({ sector: "Private", query: "Software" }),
+              },
+              {
+                title: "Banking, BFSI & Financial Analytics",
+                subtitle: "SBI • HDFC Bank • ICICI • IBPS PO",
+                stats: "14,200+ Banking Jobs",
+                img: "/src/assets/images/track_banking_finance_hub_1794910026082.jpg",
+                actionLabel: "Explore Banking Drives",
+                onClick: () => handleLaunchJobSearchWithFilter({ sector: "Banking", query: "Bank" }),
+              },
+              {
+                title: "Indian Railways, NALCO, OMC & Core PSUs",
+                subtitle: "RRB NTPC • Navratna PSUs • L&T Core",
+                stats: "19,800+ Core Posts",
+                img: "/src/assets/images/core_engineering_psu_railway_1794927485128.jpg",
+                actionLabel: "Explore Railway & PSU Jobs",
+                onClick: () => handleLaunchJobSearchWithFilter({ sector: "Government", query: "Railway" }),
+              },
+              {
+                title: "Cloud Architecture, Cybersecurity & DevOps",
+                subtitle: "AWS • Azure • Ethical Hacking • SOC Labs",
+                stats: "11,600+ Cloud Roles",
+                img: "/src/assets/images/cybersecurity_cloud_command_1794927488158.jpg",
+                actionLabel: "View Cloud & Cyber Roles",
+                onClick: () => handleLaunchJobSearchWithFilter({ sector: "Private", query: "Cloud" }),
+              },
+              {
+                title: "80% Digital + 20% Physical Skilling",
+                subtitle: "10 Programs • 50 Instant Modules",
+                stats: "100% Placement Support",
+                img: "/src/assets/images/hybrid_classroom_mentorship_1794910028151.jpg",
+                actionLabel: "Start Learning Immediately",
+                onClick: () => {
+                  sessionStorage.setItem("arohi_learning_tab_handoff", "classroom");
+                  onEnterWorkspace("learning");
+                },
+              },
+            ].map((track) => (
               <div
-                key={company.name}
-                onClick={() => onEnterWorkspace("jobmatch")}
-                className="bg-slate-50 hover:bg-blue-50 border border-slate-200/80 p-3 rounded-xl text-center flex items-center justify-center transition cursor-pointer hover:scale-105 h-12"
+                key={track.title}
+                onClick={track.onClick}
+                className="group rounded-2xl overflow-hidden border border-slate-200/90 bg-slate-900 shadow-sm hover:shadow-xl transition cursor-pointer flex flex-col justify-between"
               >
-                <span className={`text-xs ${company.font}`}>
-                  {company.name}
-                </span>
+                <div className="relative h-48 overflow-hidden bg-slate-800">
+                  <img
+                    src={track.img}
+                    alt={track.title}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
+                  <span className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-sm text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-md text-[10px] font-bold">
+                    {track.stats}
+                  </span>
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <div className="text-[10px] font-bold text-cyan-300">{track.subtitle}</div>
+                    <h4 className="text-sm font-black text-white leading-snug mt-0.5">
+                      {track.title}
+                    </h4>
+                  </div>
+                </div>
+                <div className="p-3 bg-slate-950 text-xs font-bold text-amber-300 flex items-center justify-between border-t border-slate-800">
+                  <span>{track.actionLabel}</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* TRENDING GOVERNMENT JOBS SECTION */}
+        {/* FEATURED COMPANIES & TOP CARRIERS / BRANDS SHOWCASE */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/90 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                  Featured Top Brands, Carriers &amp; Hiring Companies
+                </h3>
+                <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Verified Logos • Active Drives
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Click any brand logo (Tata, Infosys, Wipro, HDFC Bank, Reliance, Tech Mahindra &amp; more) to filter live verified job openings immediately.
+              </p>
+            </div>
+            <button
+              onClick={() => onEnterWorkspace("liveindiajobs")}
+              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer self-start sm:self-auto"
+            >
+              View All 18+ Hiring Brands &gt;
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 items-stretch">
+            {FEATURED_MNC_BRANDS.map((company) => (
+              <div
+                key={company.name}
+                onClick={() =>
+                  handleLaunchJobSearchWithFilter({
+                    sector: company.sector,
+                    query: company.searchQuery,
+                  })
+                }
+                className="bg-slate-50/90 hover:bg-blue-50/80 border border-slate-200/90 hover:border-blue-400 p-3 rounded-2xl flex flex-col items-center justify-between gap-2 transition cursor-pointer hover:shadow-md hover:-translate-y-0.5 group"
+              >
+                <div className="h-11 flex items-center justify-center w-full">
+                  <CompanyBrandLogo name={company.name} size="banner" />
+                </div>
+                <div className="w-full pt-1.5 border-t border-slate-200/70 flex items-center justify-between text-[10px]">
+                  <span className="font-bold text-slate-500 truncate max-w-[95px]">
+                    {company.tagline}
+                  </span>
+                  <span className="font-extrabold text-blue-700 bg-blue-100/80 group-hover:bg-blue-600 group-hover:text-white px-1.5 py-0.5 rounded transition shrink-0">
+                    {company.openings}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* TRENDING GOVERNMENT JOBS & PUBLIC AGENCIES SECTION */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/90 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-slate-900">
-              Trending Government Jobs
-            </h3>
+            <div>
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                Trending Government Agencies &amp; PSU Recruitments
+              </h3>
+              <p className="text-xs text-slate-500">
+                Official Central &amp; Odisha State recruitment boards with verified emblems and live notifications
+              </p>
+            </div>
             <button
               onClick={() => onEnterWorkspace("liveindiajobs")}
               className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
@@ -930,22 +1167,30 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { agency: "UPSC", title: "Civil Services & Defense", vacancies: "124 Vacancies", badge: "New", badgeColor: "bg-blue-100 text-blue-700" },
-              { agency: "SSC", title: "CGL, CHSL & Selection", vacancies: "256 Vacancies", badge: "New", badgeColor: "bg-blue-100 text-blue-700" },
-              { agency: "Railway", title: "RRB NTPC & Technical", vacancies: "12,450 Vacancies", badge: "Hot", badgeColor: "bg-orange-100 text-orange-700" },
-              { agency: "Banking", title: "SBI, IBPS PO & Clerk", vacancies: "8,932 Vacancies", badge: "Hot", badgeColor: "bg-orange-100 text-orange-700" },
-              { agency: "Odisha Govt.", title: "OPSC, OSSC & OSSSC", vacancies: "5,320 Vacancies", badge: "New", badgeColor: "bg-blue-100 text-blue-700" },
-              { agency: "State PSC", title: "Assistant Section Officer", vacancies: "2,450 Vacancies", badge: "Closing Soon", badgeColor: "bg-amber-100 text-amber-800" },
-              { agency: "Police", title: "SI, Constable & Excise", vacancies: "3,210 Vacancies", badge: "Popular", badgeColor: "bg-purple-100 text-purple-700" },
-              { agency: "Teaching", title: "KVS, NVS & High School", vacancies: "6,543 Vacancies", badge: "Hot", badgeColor: "bg-orange-100 text-orange-700" },
+              { agency: "UPSC", query: "UPSC", title: "Civil Services & Defense", vacancies: "124 Vacancies", badge: "New", badgeColor: "bg-blue-100 text-blue-700" },
+              { agency: "SSC", query: "SSC", title: "CGL, CHSL & Selection", vacancies: "256 Vacancies", badge: "New", badgeColor: "bg-blue-100 text-blue-700" },
+              { agency: "Railway", query: "Railway", title: "RRB NTPC & Technical", vacancies: "12,450 Vacancies", badge: "Hot", badgeColor: "bg-orange-100 text-orange-700" },
+              { agency: "Banking", query: "SBI", title: "SBI, IBPS PO & Clerk", vacancies: "8,932 Vacancies", badge: "Hot", badgeColor: "bg-orange-100 text-orange-700" },
+              { agency: "Odisha Govt.", query: "OPSC", title: "OPSC, OSSC & OSSSC", vacancies: "5,320 Vacancies", badge: "New", badgeColor: "bg-blue-100 text-blue-700" },
+              { agency: "NALCO & OMC", query: "NALCO", title: "Navratna & State PSU", vacancies: "2,450 Vacancies", badge: "PSU", badgeColor: "bg-amber-100 text-amber-800" },
+              { agency: "Defence / DRDO", query: "DRDO", title: "Defense Research & Armed Forces", vacancies: "3,210 Vacancies", badge: "Popular", badgeColor: "bg-purple-100 text-purple-700" },
+              { agency: "Teaching", query: "Teacher", title: "KVS, NVS & High School", vacancies: "6,543 Vacancies", badge: "Hot", badgeColor: "bg-orange-100 text-orange-700" },
             ].map((govt) => (
               <div
                 key={govt.agency}
-                onClick={() => onEnterWorkspace("liveindiajobs")}
-                className="bg-slate-50 hover:bg-blue-50/60 p-4 rounded-xl border border-slate-200/80 space-y-2 transition cursor-pointer hover:shadow-md flex flex-col justify-between"
+                onClick={() =>
+                  handleLaunchJobSearchWithFilter({
+                    sector: govt.agency === "Banking" ? "Banking" : govt.agency.includes("NALCO") ? "PSU" : "Government",
+                    query: govt.query,
+                  })
+                }
+                className="bg-slate-50 hover:bg-blue-50/60 p-4 rounded-xl border border-slate-200/80 space-y-2.5 transition cursor-pointer hover:shadow-md flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-black text-sm text-slate-900">{govt.agency}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <CompanyBrandLogo name={govt.agency} size="sm" />
+                    <span className="font-black text-sm text-slate-900">{govt.agency}</span>
+                  </div>
                   <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${govt.badgeColor}`}>
                     {govt.badge}
                   </span>
@@ -964,52 +1209,123 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
         </div>
       </section>
 
-      {/* CINEMATIC SCROLL HORIZON BRIDGE INTO INTERACTIVE 3D CAREER CITY */}
-      <div
-        ref={transitionHorizonRef}
-        className="relative rounded-3xl bg-gradient-to-b from-indigo-950 via-slate-950 to-indigo-950 p-6 sm:p-8 text-center text-white border border-indigo-500/30 shadow-2xl overflow-hidden will-change-transform"
-      >
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80" />
-        <div className="max-w-2xl mx-auto space-y-2 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-amber-300 text-xs font-extrabold uppercase tracking-wider">
-            <Compass className="w-3.5 h-3.5 text-amber-300" />
-            <span>Interactive 3D Career Metropolis</span>
-          </div>
-          <h2 className="text-xl sm:text-3xl font-black tracking-tight text-white">
-            Transitioning Into the Recruits.org.in 3D AI Career City
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-300">
-            Scroll down to descend from orbit into 8 interactive AI Career Towers—or click any building to enter its live engine.
-          </p>
-          <div className="pt-1 flex items-center justify-center gap-3">
-            <button
-              onClick={() => setShow3DCinematic(!show3DCinematic)}
-              className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-indigo-200 transition cursor-pointer flex items-center gap-1.5"
-            >
-              <Layers className="w-3.5 h-3.5 text-amber-300" />
-              <span>{show3DCinematic ? "Minimize 3D City Viewport" : "Expand 3D City Viewport"}</span>
-            </button>
-            <span className="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-xl">
-              Scroll Trajectory: {(cityScrollProgress * 100).toFixed(0)}%
+      {/* HIGH-IMPACT REAL-WORLD CAMPUS PLACEMENT MEGADRIVE, AI INTERVIEW STUDIO & UNIVERSITY PARTNERSHIP GALLERY */}
+      <section className="gsap-scroll-section bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 will-change-transform">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="space-y-1">
+            <span className="text-xs font-extrabold text-blue-600 uppercase tracking-wider">
+              Recruits.org.in National Talent &amp; Placement Ecosystem
             </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Where Campus Skilling Meets Real Corporate &amp; Government Careers
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-3xl">
+              From grand campus placement megadrives and university MoU partnerships to 1-on-1 AI interview studios—explore how students, job seekers, and institutions succeed on Recruits.org.in.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={() => onEnterWorkspace("liveindiajobs")}
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+            >
+              <span>Explore Live Placement Drives</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* GSAP SCROLLTRIGGER INTERACTIVE 3D CAREER CITY SECTION */}
-      {show3DCinematic && (
-        <section ref={careerCitySectionRef} className="relative will-change-transform">
-          <div ref={careerCityViewportRef} className="will-change-transform">
-            <Cinematic3DExperience
-              onEnterWorkspace={onEnterWorkspace}
-              selectedLanguage={selectedLanguage}
-              onLanguageChange={onLanguageChange}
-              onCloseCinematic={() => setShow3DCinematic(false)}
-              externalScrollProgress={cityScrollProgress}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+          {/* Left 7 Cols: Grand Campus Placement Megadrive & Career Expo */}
+          <div
+            onClick={() => onEnterWorkspace("liveindiajobs")}
+            className="lg:col-span-7 group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 min-h-[320px] sm:min-h-[380px] cursor-pointer shadow-md hover:shadow-xl transition"
+          >
+            <img
+              src="/src/assets/images/campus_placement_megadrive_1794927483546.jpg"
+              alt="Grand Campus Placement Megadrive and Career Expo with top MNC recruiters"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/35 to-transparent" />
+            <div className="absolute top-4 left-4 flex items-center gap-2">
+              <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-1 rounded-md uppercase tracking-wider">
+                National Placement Drives
+              </span>
+              <span className="bg-slate-950/80 backdrop-blur-sm text-white border border-white/20 text-[10px] font-bold px-3 py-1 rounded-md">
+                Tata • Infosys • Wipro • HDFC • Reliance
+              </span>
+            </div>
+            <div className="absolute bottom-5 left-5 right-5 text-white space-y-2">
+              <h3 className="text-lg sm:text-2xl font-black leading-snug">
+                Grand Campus Placement Megadrives &amp; Direct MNC Recruitment Expos
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed max-w-2xl">
+                Connect directly with verified hiring managers from top IT, Banking, Core Engineering, and Public Sector enterprises with zero middleman fees.
+              </p>
+              <div className="pt-1 flex items-center gap-4 text-xs font-extrabold text-amber-300">
+                <span className="flex items-center gap-1">
+                  Browse Active Megadrives <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
           </div>
-        </section>
-      )}
+
+          {/* Right 5 Cols: 2 Stacked Visual Spotlights (AI Interview Studio + University MoU Partnership) */}
+          <div className="lg:col-span-5 flex flex-col justify-between gap-5">
+            <div
+              onClick={() => onEnterWorkspace("interview")}
+              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 h-44 sm:h-[180px] cursor-pointer shadow-md hover:shadow-xl transition"
+            >
+              <img
+                src="/src/assets/images/ai_interview_coaching_studio_1794927483943.jpg"
+                alt="1-on-1 AI Voice Mock Interview and Coaching Studio"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent" />
+              <div className="absolute bottom-3.5 left-4 right-4 text-white space-y-1">
+                <span className="text-[10px] font-extrabold text-cyan-300 uppercase tracking-wider block">
+                  Multilingual Voice Interview Studio
+                </span>
+                <h4 className="text-sm sm:text-base font-black leading-snug">
+                  Practice 1-on-1 HR &amp; Technical Board Interviews in English, Hindi &amp; Odia
+                </h4>
+                <span className="text-[11px] font-bold text-amber-300 inline-flex items-center gap-1">
+                  Enter Interview Studio <ArrowRight className="w-3 h-3" />
+                </span>
+              </div>
+            </div>
+
+            <div
+              onClick={() => {
+                sessionStorage.setItem("arohi_learning_tab_handoff", "institutions");
+                onEnterWorkspace("learning");
+              }}
+              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 h-44 sm:h-[180px] cursor-pointer shadow-md hover:shadow-xl transition"
+            >
+              <img
+                src="/src/assets/images/university_mou_partnership_1794927487846.jpg"
+                alt="University and College Campus Talent Hub MoU Partnership"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent" />
+              <div className="absolute bottom-3.5 left-4 right-4 text-white space-y-1">
+                <span className="text-[10px] font-extrabold text-amber-300 uppercase tracking-wider block">
+                  For Colleges &amp; Universities • 2026–27 Academic Year
+                </span>
+                <h4 className="text-sm sm:text-base font-black leading-snug">
+                  Partner with Recruits.org.in to Make Your Institution a Talent Powerhouse
+                </h4>
+                <span className="text-[11px] font-bold text-cyan-300 inline-flex items-center gap-1">
+                  Book Campus Partnership Slot <ArrowRight className="w-3 h-3" />
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* LIVE HOT JOB TICKER SPOTLIGHT */}
       <section className="gsap-scroll-section bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3 will-change-transform">
@@ -1036,9 +1352,12 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               onClick={() => onEnterWorkspace("liveindiajobs")}
               className="p-3 bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 hover:border-indigo-300 rounded-xl transition cursor-pointer group space-y-1.5"
             >
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="font-bold text-slate-500 uppercase">{job.dept}</span>
-                <span className="bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded text-[9px] border border-amber-300">
+              <div className="flex items-center justify-between text-[10px] gap-1.5">
+                <div className="flex items-center gap-1.5 truncate">
+                  <CompanyBrandLogo name={job.dept} size="sm" className="w-6 h-6 rounded-md" />
+                  <span className="font-bold text-slate-600 uppercase truncate">{job.dept}</span>
+                </div>
+                <span className="bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded text-[9px] border border-amber-300 shrink-0">
                   {job.badge}
                 </span>
               </div>
@@ -1328,6 +1647,349 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               <span>Post Job as Employer</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* OFFICIAL INDUSTRY-READY TRAINING PROGRAMS & INSTITUTIONAL CAMPUS PARTNER ECOSYSTEM (2026–27) */}
+      <section className="gsap-scroll-section bg-gradient-to-br from-[#070b24] via-[#120d38] to-[#090d26] border-2 border-indigo-500/40 rounded-3xl p-6 sm:p-8 md:p-10 text-white space-y-8 shadow-2xl relative overflow-hidden will-change-transform">
+        {/* Neon Ambient Glows matching Official Posters */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/3 -right-24 w-96 h-96 bg-purple-600/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 left-1/3 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Header & Hybrid Delivery Pillars */}
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-indigo-500/30 pb-6">
+          <div className="space-y-3 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-200 text-xs font-black tracking-wider uppercase">
+                <GraduationCap className="w-3.5 h-3.5 text-amber-300" />
+                Recruits.org.in • Learn • Work • Grow
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-black tracking-wider uppercase">
+                <Award className="w-3.5 h-3.5" />
+                100% Placement Assistance
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-fuchsia-500/20 border border-fuchsia-400/40 text-fuchsia-200 text-xs font-black tracking-wider uppercase">
+                80% Digital + 20% Physical Tutoring
+              </span>
+            </div>
+
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
+              Industry-Ready{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-indigo-200 to-purple-300">
+                Training Programs
+              </span>{" "}
+              &{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-200">
+                Campus Talent Hub
+              </span>
+            </h2>
+
+            <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed">
+              High-Demand Skills • AI-Powered Learning • Real Career Opportunities. Master industry-aligned curricula with{" "}
+              <strong className="text-white">80% Digital Learning + 20% Physical Tutoring</strong>, hands-on projects, industry mentorship, globally recognized certification, and{" "}
+              <strong className="text-amber-300">100% Placement Assistance in Top MNCs</strong> across 10 major sectors.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              onClick={() => {
+                sessionStorage.setItem("arohi_learning_tab_handoff", "programs");
+                onEnterWorkspace("learning");
+              }}
+              className="px-5 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-xs rounded-2xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 cursor-pointer border border-indigo-400/30"
+            >
+              <GraduationCap className="w-4 h-4" /> Explore All 10 Courses
+            </button>
+            <button
+              onClick={() => {
+                sessionStorage.setItem("arohi_learning_tab_handoff", "institutions");
+                onEnterWorkspace("learning");
+              }}
+              className="px-5 py-3 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-xs rounded-2xl shadow-lg shadow-amber-500/25 transition flex items-center gap-2 cursor-pointer"
+            >
+              <Building2 className="w-4 h-4" /> For Colleges & Universities (2026–27)
+            </button>
+          </div>
+        </div>
+
+        {/* 5 Core Delivery Pillars Strip (Directly from Poster) */}
+        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {[
+            { label: "80% Digital Learning", sub: "AI-Powered Interactive LMS", icon: Globe },
+            { label: "20% Physical Tutoring", sub: "Classroom & Lab Mentorship", icon: UserCheck },
+            { label: "Hands-on Projects", sub: "Production Capstone Builds", icon: Code },
+            { label: "Industry Mentorship", sub: "1-on-1 Senior Practitioners", icon: Sparkles },
+            { label: "Globally Recognized", sub: "Verified Career Certificate", icon: ShieldCheck },
+          ].map((pillar, idx) => {
+            const IconComp = pillar.icon;
+            return (
+              <div
+                key={idx}
+                className="bg-slate-900/80 border border-indigo-500/30 rounded-2xl p-3.5 flex items-center gap-3 hover:border-cyan-400/50 transition"
+              >
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-cyan-300 shrink-0">
+                  <IconComp className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-white leading-snug">{pillar.label}</div>
+                  <div className="text-[10px] text-indigo-200/80">{pillar.sub}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* REAL-WORLD HYBRID CLASSROOM & LAB MENTORSHIP VISUAL SHOWCASE */}
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch bg-slate-950/80 border border-indigo-500/30 rounded-2xl p-4">
+          <div className="lg:col-span-5 relative rounded-xl overflow-hidden min-h-[190px] bg-slate-900">
+            <img
+              src="/src/assets/images/hybrid_classroom_mentorship_1794910028151.jpg"
+              alt="80% Digital Learning + 20% Physical Classroom Tutoring on Recruits.org.in"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-transparent" />
+            <div className="absolute bottom-3 left-3 right-3 text-white">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 block">
+                Hybrid Learning Model in Action
+              </span>
+              <p className="text-xs sm:text-sm font-black leading-snug">
+                80% Interactive Digital LMS + 20% Physical Faculty &amp; Lab Mentorship
+              </p>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 flex flex-col justify-between space-y-3 p-1">
+            <div className="space-y-1.5">
+              <span className="text-xs font-extrabold text-cyan-300">
+                Immediate Self-Paced + Mentor-Guided Execution
+              </span>
+              <h3 className="text-base sm:text-lg font-black text-white">
+                Every Student Can Start Learning Module 1 Immediately Upon Selection
+              </h3>
+              <p className="text-xs text-indigo-100/85 leading-relaxed">
+                No waiting for batch dates to begin—unlock 50 pre-built interactive modules across all 10 programs with AI Voice Professor explanations in English, Hindi &amp; Odia, real-time code/case-study lab grading, and weekend physical classroom tutoring.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5 pt-1">
+              <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5">
+                <span className="text-sm font-black text-emerald-300 block tabular-nums">50 Modules</span>
+                <span className="text-[10px] text-slate-400">Pre-Loaded &amp; Live</span>
+              </div>
+              <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5">
+                <span className="text-sm font-black text-amber-300 block tabular-nums">80% + 20%</span>
+                <span className="text-[10px] text-slate-400">Digital + Physical Lab</span>
+              </div>
+              <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5">
+                <span className="text-sm font-black text-cyan-300 block tabular-nums">100% Assist</span>
+                <span className="text-[10px] text-slate-400">MNC Placement Drives</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 10 Numbered Training Programs Grid (Exact Poster Layout 1–5 Left, 6–10 Right) */}
+        <div className="relative z-10 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs font-black uppercase tracking-wider text-cyan-300 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-amber-300" />
+              Our 10 Official Training Programs (Click any course to enroll)
+            </span>
+            <span className="text-[11px] text-indigo-200 font-semibold">
+              EMI & Institutional Batch Scholarships Available
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {OFFICIAL_10_TRAINING_PROGRAMS.map((prog) => (
+              <div
+                key={prog.id}
+                onClick={() => {
+                  sessionStorage.setItem("arohi_learning_program_handoff", prog.id);
+                  sessionStorage.setItem("arohi_learning_tab_handoff", "classroom");
+                  onEnterWorkspace("learning");
+                }}
+                className="group bg-slate-900/90 hover:bg-indigo-950/90 border border-indigo-500/40 hover:border-cyan-400 rounded-2xl p-3.5 flex items-center justify-between gap-3 transition-all cursor-pointer shadow-md hover:shadow-cyan-500/10"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0 border border-indigo-300/50 shadow">
+                    {prog.number}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-xs sm:text-sm font-extrabold text-white group-hover:text-cyan-300 transition truncate">
+                      {prog.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-[11px] text-indigo-200/80 mt-0.5 flex-wrap">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-cyan-400" /> {prog.duration}
+                      </span>
+                      <span>•</span>
+                      <span className="text-emerald-300 font-bold">5 Modules Ready • Start Immediately</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black uppercase">
+                    <Play className="w-2.5 h-2.5 fill-current" /> Start Now
+                  </span>
+                  <div className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 border border-indigo-300/40 text-white font-black text-xs sm:text-sm shadow">
+                    {prog.feeINR}
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-indigo-300 group-hover:translate-x-1 group-hover:text-cyan-300 transition-transform" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 100% Placement Assistance Across 10 Major Sectors */}
+        <div className="relative z-10 bg-slate-950/80 border border-amber-400/30 rounded-2xl p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-black text-amber-300 uppercase tracking-wide">
+                  100% Placement Assistance • Support for Placements in Top MNCs
+                </h3>
+                <p className="text-xs text-slate-300">
+                  Direct hiring pipelines and placement drives across 10 major industry sectors
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => onEnterWorkspace("liveindiajobs")}
+              className="text-xs font-extrabold text-amber-300 hover:text-amber-200 flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+            >
+              View Open Sector Jobs <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+            {PLACEMENT_SECTORS.map((sec) => {
+              const SecIcon = sec.icon;
+              return (
+                <div
+                  key={sec.name}
+                  onClick={() => {
+                    sessionStorage.setItem("arohi_learning_tab_handoff", "programs");
+                    onEnterWorkspace("learning");
+                  }}
+                  className="bg-slate-900/90 hover:bg-indigo-950/80 border border-slate-800 hover:border-amber-400/40 rounded-xl p-2.5 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${sec.color}`}>
+                    <SecIcon className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="text-xs font-extrabold text-white leading-tight">{sec.name}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Top MNC Placement Partner Brand Logos Strip */}
+          <div className="pt-3 border-t border-slate-800/90 space-y-2.5">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-300">
+                Top MNC &amp; Enterprise Hiring Partners Recruiting Recruits.org.in Graduates:
+              </span>
+              <span className="text-[10px] text-slate-400 font-semibold">
+                Click any brand to view active roles
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+              {FEATURED_MNC_BRANDS.slice(0, 12).map((brand) => (
+                <div
+                  key={brand.name}
+                  onClick={() =>
+                    handleLaunchJobSearchWithFilter({
+                      sector: brand.sector,
+                      query: brand.searchQuery,
+                    })
+                  }
+                  className="bg-white hover:bg-amber-50 border border-slate-200 rounded-xl px-2.5 py-2 flex items-center justify-center transition cursor-pointer hover:scale-[1.02] shadow-sm h-11"
+                >
+                  <CompanyBrandLogo name={brand.name} size="banner" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* FOR COLLEGES & UNIVERSITIES (2026–27 ACADEMIC YEAR PARTNER CALLOUT + 3 OFFICIAL POSTERS) */}
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center bg-gradient-to-r from-indigo-950/90 via-purple-950/80 to-slate-950/90 border border-fuchsia-500/40 rounded-2xl p-5 sm:p-6">
+          <div className="lg:col-span-7 space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/20 border border-fuchsia-400/40 text-fuchsia-200 text-[11px] font-black uppercase tracking-wider">
+              <Building className="w-3.5 h-3.5 text-amber-300" />
+              For Colleges & Universities • Limited 2026–27 Slots
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-black text-white leading-snug">
+              Make Your Institution India’s Next{" "}
+              <span className="text-cyan-300">Talent Powerhouse</span> — Turn Your Campus into a{" "}
+              <span className="text-amber-300">Future-Ready Talent Hub</span>
+            </h3>
+
+            <p className="text-xs text-indigo-100/90 leading-relaxed">
+              Partner with <strong className="text-white">Recruits.org.in</strong> (A Strategic Skilling & Placement Partner for Educational Institutions by{" "}
+              <strong className="text-amber-300">Quench Research Labs Private Limited</strong>) to deliver real career outcomes, 80% Digital + 20% Physical Campus Tutoring, and 100% Placement Assistance for your graduating batches.
+            </p>
+
+            <div className="pt-1 flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => {
+                  sessionStorage.setItem("arohi_learning_tab_handoff", "institutions");
+                  onEnterWorkspace("learning");
+                }}
+                className="px-5 py-2.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-black text-xs rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer"
+              >
+                Reserve 2026–27 Campus Partnership Slot <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  sessionStorage.setItem("arohi_learning_tab_handoff", "posters_ai");
+                  onEnterWorkspace("learning");
+                }}
+                className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-indigo-400/40 text-indigo-200 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                View Official Brochures & Posters
+              </button>
+            </div>
+          </div>
+
+          {/* 3 Official Uploaded Posters Preview Strip */}
+          <div className="lg:col-span-5 grid grid-cols-3 gap-2.5">
+            {OFFICIAL_POSTERS.map((poster) => (
+              <div
+                key={poster.id}
+                onClick={() => {
+                  sessionStorage.setItem("arohi_learning_tab_handoff", "posters_ai");
+                  onEnterWorkspace("learning");
+                }}
+                className="group relative rounded-xl overflow-hidden border border-indigo-400/40 hover:border-amber-300 cursor-pointer shadow-lg bg-slate-950 aspect-[3/4]"
+                title={poster.title}
+              >
+                <img
+                  src={poster.imageUrl}
+                  alt={poster.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent flex flex-col justify-end p-2">
+                  <span className="text-[9px] font-black text-amber-300 uppercase leading-tight line-clamp-1">
+                    {poster.subtitle}
+                  </span>
+                  <span className="text-[10px] font-bold text-white leading-tight line-clamp-2">
+                    {poster.title}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -1792,15 +2454,19 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       {/* FOOTER CTA SECTION */}
       <section className="gsap-scroll-section bg-gradient-to-r from-indigo-800 via-indigo-900 to-purple-900 border border-indigo-700 rounded-3xl p-8 sm:p-10 text-center space-y-6 shadow-xl text-white relative overflow-hidden will-change-transform">
         <div className="max-w-2xl mx-auto space-y-3 relative z-10">
+          <div className="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-extrabold px-3.5 py-1 rounded-full">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Quench Research Labs Private Limited • Flagship Ecosystem</span>
+          </div>
           <h3 className="text-2xl sm:text-3xl font-black text-white">
             Ready to Accelerate Your Career on Recruits.org.in?
           </h3>
           <p className="text-xs sm:text-sm text-indigo-200">
-            Join candidates and employers advancing with Arohi AI Career & Talent Intelligence.
+            Join candidates and employers advancing with Arohi AI Career &amp; Talent Intelligence (<a href="https://arohiai.com" target="_blank" rel="noopener noreferrer" className="text-amber-300 underline font-bold hover:text-amber-200">arohiai.com</a>), developed by <strong className="text-white">Quench Research Labs Private Limited</strong>.
           </p>
         </div>
 
-        <div className="flex justify-center relative z-10">
+        <div className="flex flex-wrap items-center justify-center gap-3 relative z-10">
           <button
             onClick={() => onEnterWorkspace("liveindiajobs")}
             className="px-8 py-4 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm sm:text-base rounded-2xl shadow-xl border border-amber-300 flex items-center gap-3 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
@@ -1808,6 +2474,16 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             <span>Enter AI Career Portal Workspace</span>
             <ArrowRight className="w-5 h-5 text-slate-950" />
           </button>
+
+          <a
+            href="https://arohiai.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-6 py-4 bg-indigo-950/80 hover:bg-indigo-950 text-amber-300 font-black text-sm sm:text-base rounded-2xl shadow-lg border border-indigo-500/40 flex items-center gap-2 transition-all duration-300 hover:scale-[1.02]"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>Explore ArohiAI.com</span>
+          </a>
         </div>
       </section>
     </div>

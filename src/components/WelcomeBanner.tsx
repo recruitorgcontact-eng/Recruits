@@ -19,7 +19,7 @@ export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
   setIsSpeaking,
 }) => {
   const introQuote =
-    "Hi, I'm Arohi Career AI, your personal career companion on Recruits.org.in. I specialize in careers, hiring, skills, learning, and professional growth. Built on the Arohi AI platform, I'm here to guide you at every stage of your career.";
+    "Hi, I'm Arohi Career AI, your personal career companion on Recruits.org.in. Built on the Arohi AI platform (arohiai.com) by Quench Research Labs Private Limited, I'm here to guide you at every stage of your career.";
 
   const handlePlayVoiceIntro = () => {
     setIsSpeaking(true);
@@ -40,9 +40,9 @@ export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
 
       <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold px-3.5 py-1 rounded-full backdrop-blur-md shadow-sm">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold px-3.5 py-1 rounded-full backdrop-blur-md shadow-sm flex-wrap">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            Recruits.org.in Intelligence Engine
+            <span>Recruits.org.in Intelligence Engine • Powered by <a href="https://arohiai.com" target="_blank" rel="noopener noreferrer" className="underline font-extrabold hover:text-indigo-900">arohiai.com</a> (Quench Research Labs Pvt. Ltd.)</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-slate-900 font-sans leading-tight">

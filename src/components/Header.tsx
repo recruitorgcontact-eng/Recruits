@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <p className="text-[10px] text-slate-500 font-semibold tracking-wide -mt-0.5">
-              AI Employment Ecosystem • Recruits.org.in
+              Powered by ArohiAI.com • Quench Research Labs Pvt. Ltd.
             </p>
           </div>
         </div>
@@ -152,13 +152,31 @@ export const Header: React.FC<HeaderProps> = ({
             Skill Tests
           </button>
           <button
-            onClick={() => handleNavClick("learning")}
-            className="hover:text-blue-600 transition cursor-pointer"
+            onClick={() => {
+              sessionStorage.setItem("arohi_learning_tab_handoff", "programs");
+              handleNavClick("learning");
+            }}
+            className="hover:text-blue-600 transition cursor-pointer flex items-center gap-1"
           >
-            Courses
+            <span>Courses</span>
+            <span className="text-[9px] bg-indigo-600 text-white font-extrabold px-1.5 py-0.2 rounded-full uppercase">
+              10
+            </span>
           </button>
           <button
-            onClick={() => handleNavClick("salary")}
+            onClick={() => {
+              sessionStorage.setItem("arohi_learning_tab_handoff", "institutions");
+              handleNavClick("learning");
+            }}
+            className="hover:text-blue-600 transition cursor-pointer"
+          >
+            Colleges (2026–27)
+          </button>
+          <button
+            onClick={() => {
+              sessionStorage.setItem("arohi_learning_tab_handoff", "programs");
+              handleNavClick("learning");
+            }}
             className="hover:text-blue-600 transition cursor-pointer"
           >
             Pricing
@@ -432,6 +450,32 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
+          </div>
+
+          {/* Corporate Attribution & ArohiAI.com Promotion Strip inside Expandable Menu */}
+          <div className="mt-2.5 px-4 py-2.5 bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 rounded-xl border border-indigo-800/60 text-white flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px]">
+            <div className="flex items-center gap-2 text-center sm:text-left">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+              <span>
+                An Initiative of <strong className="text-amber-300 font-extrabold">Quench Research Labs Private Limited</strong> • Powered by{" "}
+                <a
+                  href="https://arohiai.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-300 hover:text-white underline font-bold"
+                >
+                  arohiai.com
+                </a>
+              </span>
+            </div>
+            <a
+              href="https://arohiai.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-lg text-[10px] transition shrink-0"
+            >
+              Explore ArohiAI.com →
+            </a>
           </div>
         </div>
       )}

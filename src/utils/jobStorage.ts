@@ -4,6 +4,46 @@ const CUSTOM_JOBS_KEY = "arohi_custom_free_jobs";
 const USER_PROFILE_KEY = "arohi_user_auth_profile";
 const APPLICATIONS_KEY = "arohi_job_applications";
 
+// Pull persisted jobs and applications from the backend server into localStorage cache
+export async function syncPlatformDataFromServer(): Promise<void> {
+  try {
+    const [jobsRes, appsRes] = await Promise.all([
+      fetch("/api/platform/jobs"),
+      fetch("/api/platform/applications"),
+    ]);
+
+    if (jobsRes.ok) {
+      const jobsData = await jobsRes.json();
+      if (Array.isArray(jobsData.jobs) && jobsData.jobs.length > 0) {
+        const localJobs = getStoredFreeJobs();
+        const serverIds = new Set(jobsData.jobs.map((j: LiveIndiaJob) => j.id));
+        const merged = [
+          ...jobsData.jobs,
+          ...localJobs.filter((j) => !serverIds.has(j.id)),
+        ];
+        localStorage.setItem(CUSTOM_JOBS_KEY, JSON.stringify(merged));
+        window.dispatchEvent(new Event("arohi_jobs_updated"));
+      }
+    }
+
+    if (appsRes.ok) {
+      const appsData = await appsRes.json();
+      if (Array.isArray(appsData.applications) && appsData.applications.length > 0) {
+        const localApps = getJobApplications();
+        const serverAppIds = new Set(appsData.applications.map((a: JobApplication) => a.id));
+        const mergedApps = [
+          ...appsData.applications,
+          ...localApps.filter((a) => !serverAppIds.has(a.id)),
+        ];
+        localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(mergedApps));
+        window.dispatchEvent(new Event("arohi_jobs_updated"));
+      }
+    }
+  } catch (err) {
+    // Silent fallback to local cache if offline
+  }
+}
+
 // Get saved user profile
 export function getStoredUserProfile(): UserProfile | null {
   try {
@@ -28,14 +68,18 @@ export function getStoredFreeJobs(): LiveIndiaJob[] {
   }
 }
 
-// Save a new free posted job
+// Save a new free posted job (persists to both localStorage and backend server)
 export function saveFreeJob(job: LiveIndiaJob): LiveIndiaJob[] {
   const existing = getStoredFreeJobs();
-  const updated = [job, ...existing];
+  const updated = [job, ...existing.filter((j) => j.id !== job.id)];
   try {
     localStorage.setItem(CUSTOM_JOBS_KEY, JSON.stringify(updated));
-    // Dispatch window event so candidate live job engine updates instantly
     window.dispatchEvent(new Event("arohi_jobs_updated"));
+    fetch("/api/platform/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ job }),
+    }).catch(() => {});
   } catch (err) {
     console.error("Error saving free job:", err);
   }
@@ -49,6 +93,11 @@ export function toggleJobStatus(jobId: string, status: "Active" | "Closed"): Liv
   try {
     localStorage.setItem(CUSTOM_JOBS_KEY, JSON.stringify(updated));
     window.dispatchEvent(new Event("arohi_jobs_updated"));
+    fetch(`/api/platform/jobs/${encodeURIComponent(jobId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).catch(() => {});
   } catch (err) {
     console.error("Error toggling job status:", err);
   }
@@ -62,6 +111,9 @@ export function deleteFreeJob(jobId: string): LiveIndiaJob[] {
   try {
     localStorage.setItem(CUSTOM_JOBS_KEY, JSON.stringify(updated));
     window.dispatchEvent(new Event("arohi_jobs_updated"));
+    fetch(`/api/platform/jobs/${encodeURIComponent(jobId)}`, {
+      method: "DELETE",
+    }).catch(() => {});
   } catch (err) {
     console.error("Error deleting free job:", err);
   }
@@ -100,6 +152,12 @@ export function submitCandidateApplication(app: Omit<JobApplication, "id" | "app
     localStorage.setItem(CUSTOM_JOBS_KEY, JSON.stringify(updatedJobs));
 
     window.dispatchEvent(new Event("arohi_jobs_updated"));
+
+    fetch("/api/platform/applications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ application: newApp }),
+    }).catch(() => {});
   } catch (err) {
     console.error("Error saving job application:", err);
   }

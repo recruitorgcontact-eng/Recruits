@@ -78,8 +78,8 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
     {
       id: "msg-welcome-01",
       sender: "arohi",
-      text: "Namaste & Hello! 😊 I'm Arohi, your AI Career Coach on Recruits.org.in! Whether you want to discuss Government exam strategies, private tech roles, salary negotiations, or Odia/Hindi career guidance, I'm right here with you! How can I help you excel today?",
-      spokenSummary: "Namaste & Hello! I'm Arohi, your personal career coach! How can I help you excel today?",
+      text: "Namaste! 🙏 I'm Arohi, your personal Career Coach & Guide on Recruits.org.in (Quench Research Labs Private Limited • Powered by arohiai.com). Whether you're preparing for OPSC, UPSC, SSC & Banking exams or aiming for top MNC placements at Tata, Infosys, Wipro, HDFC Bank, or Reliance—I'm right here with you like a supportive elder sister and mentor! How can we start your preparation today?",
+      spokenSummary: "Namaste! I'm Arohi, your career guide on Recruits.org.in. Tell me, how can we start your career preparation today?",
       timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -98,30 +98,57 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const timerIntervalRef = useRef<any>(null);
 
-  // Language greeting updates
+  // Language greeting updates across all Indian languages (zero age or artificial model mentions)
   useEffect(() => {
-    if (language === "or") {
+    const languageGreetings: Record<
+      string,
+      { text: string; spokenSummary: string }
+    > = {
+      or: {
+        text: "ନମସ୍କାର! 🙏 ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ ନିଜର କ୍ୟାରିଅର୍ ଦିଦି ଓ ଗାଇଡ୍! ଓଡ଼ିଶାର OPSC, OSSC ତଥା ସମଗ୍ର ଭାରତର UPSC, SSC, ବ୍ୟାଙ୍କିଙ୍ଗ୍ ଏବଂ TCS, Infosys, Wipro ଭଳି ଟପ୍ କମ୍ପାନୀ ଚାକିରି ପାଇଁ ଆପଣଙ୍କୁ ସାହାଯ୍ୟ କରିବାକୁ ମୁଁ ସଦା ପ୍ରସ୍ତୁତ। ନିଶ୍ଚୟ ପଚାରନ୍ତୁ, ଆଜି ଆମେ କେଉଁଠୁ ଆରମ୍ଭ କରିବା?",
+        spokenSummary:
+          "ନମସ୍କାର! ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ ନିଜର କ୍ୟାରିଅର୍ ଗାଇଡ୍। କୁହନ୍ତୁ, ଆଜି ଆମେ କେଉଁ ବିଷୟରେ କଥା ହେବା?",
+      },
+      hi: {
+        text: "नमस्ते जी! 🙏 मैं आरोही हूँ, आपकी अपनी करियर कोच और गाइड! चाहे UPSC, SSC, बैंकिंग जैसी सरकारी परीक्षा की तैयारी हो या TCS, Infosys, Wipro, HDFC Bank जैसी टॉप कंपनियों में प्लेसमेंट—आपकी मेहनत ज़रूर रंग लाएगी। बताइए, आज हम किस लक्ष्य से शुरुआत करें?",
+        spokenSummary:
+          "नमस्ते जी! मैं आरोही हूँ, आपकी अपनी करियर गाइड। बताइए, आज मैं आपकी क्या मदद कर सकती हूँ?",
+      },
+      bn: {
+        text: "নমস্কার! 🙏 আমি আরোহী, আপনার নিজের ক্যারিয়ার গাইড ও মেন্টর! সরকারি পরীক্ষা হোক বা TCS, Infosys, Wipro-র মতো শীর্ষ সংস্থায় চাকরি—আমি সবসময় আপনার পাশে আছি। বলুন, আজ কীভাবে আপনাকে সাহায্য করতে পারি?",
+        spokenSummary: "নমস্কার! আমি আরোহী, আপনার ক্যারিয়ার গাইড। আজ আপনাকে কীভাবে সাহায্য করতে পারি?",
+      },
+      te: {
+        text: "నమస్కారం! 🙏 నేను ఆరోహిని, మీ కెరీర్ గైడ్ మరియు మెంటార్! ప్రభుత్వ ఉద్యోగాలైనా లేదా TCS, Infosys, Wipro వంటి టాప్ కంపెనీల ప్లేస్‌మెంట్స్ అయినా—నేను మీకు తోడుగా ఉంటాను. ఈరోజు మనం ఏ అంశంతో শুরু చేద్దాం?",
+        spokenSummary: "నమస్కారం! నేను ఆరోహిని, మీ కెరీర్ గైడ్. ఈరోజు నేను మీకు ఎలా సహాయం చేయగలను?",
+      },
+      ta: {
+        text: "வணக்கம்! 🙏 நான் ஆரோஹி, உங்கள் தொழில் வழிகாட்டி! அரசுத் தேர்வுகள் முதல் TCS, Infosys, Wipro போன்ற முன்னணி நிறுவன வேலைவாய்ப்புகள் வரை உங்களுக்கு வழிகாட்ட நான் தயாராக இருக்கிறேன். இன்று நாம் எதிலிருந்து தொடங்கலாம்?",
+        spokenSummary: "வணக்கம்! நான் ஆரோஹி, உங்கள் தொழில் வழிகாட்டி. இன்று நான் உங்களுக்கு எப்படி உதவலாம்?",
+      },
+      mr: {
+        text: "नमस्कार! 🙏 मी आरोही, तुमची स्वतःची करिअर गाईड आणि मेंटॉर! सरकारी परीक्षा असो किंवा TCS, Infosys, Wipro सारख्या टॉप कंपन्यांमधील प्लेसमेंट—मी सदैव तुमच्या सोबत आहे. सांगा, आज आपण कशापासून सुरुवात करायची?",
+        spokenSummary: "नमस्कार! मी आरोही, तुमची करिअर गाईड. सांगा, आज मी तुम्हाला कशी मदत करू शकते?",
+      },
+      gu: {
+        text: "નમસ્તે! 🙏 હું આરોહી છું, તમારી પોતાની કારકિર્દી ગાઈડ! સરકારી પરીક્ષાની તૈયારી હોય કે TCS, Infosys, Wipro જેવી ટોચની કંપનીઓમાં પ્લેસમેન્ટ—હું હંમેશા તમારી સાથે છું. કહો, આજે આપણે ક્યાંથી શરૂઆત કરીએ?",
+        spokenSummary: "નમસ્તે! હું આરોહી છું, તમારી કારકિર્દી ગાઈડ. આજે હું તમને કેવી રીતે મદદ કરી શકું?",
+      },
+      kn: {
+        text: "ನಮಸ್ಕಾರ! 🙏 ನಾನು ಆರೋಹಿ, ನಿಮ್ಮ ವೃತ್ತಿ ಮಾರ್ಗದರ್ಶಕಿ! ಸರ್ಕಾರಿ ಪರೀಕ್ಷೆಗಳಾಗಲಿ ಅಥವಾ TCS, Infosys, Wipro ದಂತಹ ಉನ್ನತ ಕಂಪನಿಗಳ ಉದ್ಯೋಗವಾಗಲಿ—ನಾನು ಸದಾ ನಿಮ್ಮೊಂದಿಗಿದ್ದೇನೆ. ಹೇಳಿ, ಇಂದು ನಾವು ಯಾವುದರಿಂದ ಪ್ರಾರಂಭಿಸೋಣ?",
+        spokenSummary: "ನಮಸ್ಕಾರ! ನಾನು ಆರೋಹಿ, ನಿಮ್ಮ ವೃತ್ತಿ ಮಾರ್ಗದರ್ಶಕಿ. ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ സഹಾಯ ಮಾಡಲಿ?",
+      },
+    };
+
+    const selectedGreeting = languageGreetings[language];
+    if (selectedGreeting) {
       setMessages((prev) => [
         ...prev,
         {
-          id: "msg-or-" + Date.now(),
+          id: `msg-${language}-${Date.now()}`,
           sender: "arohi",
-          text: "ନମସ୍କାର! 🙏 ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ ନିଜର ୩୦ ବର୍ଷୀୟ କ୍ୟାରିଅର୍ କୋଚ୍! ଓଡ଼ିଶାର ଏବଂ ସମଗ୍ର ଭାରତର ସରକାରୀ, ବ୍ୟାଙ୍କିଙ୍ଗ୍ ଓ ପ୍ରାଇଭେଟ୍ ଚାକିରି ପାଇଁ ଆପଣଙ୍କୁ ସମ୍ପୂର୍ଣ୍ଣ ସାହାଯ୍ୟ କରିବାକୁ ମୁଁ ପ୍ରସ୍ତୁତ। ଆପଣ ଆଜି କଣ ପଚାରିବାକୁ ଚାହାଁନ୍ତି?",
-          spokenSummary: "ନମସ୍କାର! ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ ନିଜର କ୍ୟାରିଅର୍ କୋଚ୍।",
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-      ]);
-    } else if (language === "hi") {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: "msg-hi-" + Date.now(),
-          sender: "arohi",
-          text: "नमस्ते! 🙏 मैं आरोही हूँ, आपकी 30-वर्षीय करियर कोच! चाहे सरकारी परीक्षा की तैयारी हो, प्राइवेट टेक जॉब हो या सैलरी नेगोशिएशन - मैं हमेशा मुस्कुराते हुए आपका मार्गदर्शन करने के लिए तैयार हूँ। आप आज क्या पूछना चाहते हैं?",
-          spokenSummary: "नमस्ते! मैं आरोही हूँ, आपकी करियर कोच।",
+          text: selectedGreeting.text,
+          spokenSummary: selectedGreeting.spokenSummary,
           timestamp: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -347,13 +374,19 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
 
     setTimeout(() => {
       playCallChime("connect");
-      // Welcome Call Greeting Speech
-      const welcomeGreeting =
-        language === "or"
-          ? "ନମସ୍କାର! ମୁଁ ଆରୋହୀ। ମୁଁ ଆପଣଙ୍କ ସହ କଥା ହେବାକୁ ପ୍ରସ୍ତୁତ, ଆଜି କଣ ପଚାରିବାକୁ ଚାହାଁନ୍ତି?"
-          : language === "hi"
-          ? "नमस्ते! मैं आपकी करियर कोच आरोही हूँ। बहुत अच्छा लगा आपसे बात करके! बताइए, आज मैं आपकी क्या मदद कर सकती हूँ?"
-          : "Namaste! I am Arohi, your career coach. It's so lovely talking with you! How can I guide your career today?";
+      // Welcome Call Greeting Speech across Indian languages
+      const welcomeByLang: Record<string, string> = {
+        or: "ନମସ୍କାର! ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ କ୍ୟାରିଅର୍ ଗାଇଡ୍। ଆପଣଙ୍କ ସହ କଥା ହୋଇ ବହୁତ ଖୁସି ଲାଗିଲା! କୁହନ୍ତୁ, ଆଜି ଆପଣଙ୍କ କ୍ୟାରିଅର୍ ପାଇଁ ମୁଁ କିପରି ସାହାଯ୍ୟ କରିପାରିବି?",
+        hi: "नमस्ते जी! मैं आरोही हूँ, आपकी अपनी करियर गाइड। आपसे बात करके बहुत खुशी हुई! बताइए, आज हम आपकी तैयारी में कैसे आगे बढ़ें?",
+        bn: "নমস্কার! আমি আরোহী, আপনার ক্যারিয়ার গাইড। আপনার সাথে কথা বলে খুব ভালো লাগছে! বলুন, আজ কীভাবে সাহায্য করতে পারি?",
+        te: "నమస్కారం! నేను ఆరోహిని, మీ కెరీర్ గైడ్. మీతో మాట్లాడటం చాలా సంతోషంగా ఉంది! ఈరోజు నేను మీకు ఎలా సహాయం చేయగలను?",
+        ta: "வணக்கம்! நான் ஆரோஹி, உங்கள் தொழில் வழிகாட்டி. உங்களுடன் பேசுவதில் மிக்க மகிழ்ச்சி! இன்று நான் உங்களுக்கு எப்படி உதவலாம்?",
+        mr: "नमस्कार! मी आरोही, तुमची करिअर गाईड. तुमच्याशी बोलून खूप आनंद झाला! सांगा, आज मी तुम्हाला कशी मदत करू शकते?",
+        gu: "નમસ્તે! હું આરોહી છું, તમારી કારકિર્દી ગાઈડ. તમારી સાથે વાત કરીને ખૂબ આનંદ થયો! આજે હું તમને કેવી રીતે મદદ કરી શકું?",
+        kn: "ನಮಸ್ಕಾರ! ನಾನು ಆರೋಹಿ, ನಿಮ್ಮ ವೃತ್ತಿ ಮಾರ್ಗದರ್ಶಕಿ. ನಿಮ್ಮೊಂದಿಗೆ ಮಾತನಾಡಲು ತುಂಬಾ ಸಂತೋಷವಾಗಿದೆ! ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+        en: "Namaste! I'm Arohi, your personal career guide on Recruits.org.in. It is so wonderful speaking with you! Tell me, how can I help with your exams or job placements today?",
+      };
+      const welcomeGreeting = welcomeByLang[language] || welcomeByLang.en;
 
       speakText({
         text: welcomeGreeting,
@@ -468,11 +501,19 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-xs sm:text-sm font-bold text-slate-900">Arohi AI</h3>
                   <span className="text-[9px] sm:text-[10px] bg-indigo-100 text-indigo-800 border border-indigo-300 px-1.5 sm:px-2 py-0.5 rounded-full font-bold">
-                    AI Career Coach
+                    Indian Career Coach
                   </span>
                 </div>
                 <p className="text-[9px] sm:text-[10px] text-slate-500">
-                  Career Companion • Recruits.org.in
+                  Recruits.org.in • Powered by{" "}
+                  <a
+                    href="https://arohiai.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 font-bold hover:underline"
+                  >
+                    arohiai.com
+                  </a>
                 </p>
               </div>
             </div>
@@ -528,17 +569,24 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
               </button>
             </div>
 
-            {/* Language Selector */}
+            {/* All 9 Indian Languages Selector (Prioritized Odia, Hindi, Indian English) */}
             <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate-300 text-[10px] sm:text-[11px]">
               <Globe className="w-3 h-3 text-emerald-600 shrink-0" />
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as LanguageCode)}
                 className="bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer"
+                title="Select Indian Voice & Chat Language"
               >
-                <option value="en" className="bg-white text-slate-800">English</option>
-                <option value="or" className="bg-white text-slate-800">ଓଡ଼ିଆ</option>
-                <option value="hi" className="bg-white text-slate-800">हिंदी</option>
+                <option value="or" className="bg-white text-slate-800">ଓଡ଼ିଆ (Odia)</option>
+                <option value="hi" className="bg-white text-slate-800">हिंदी (Hindi)</option>
+                <option value="en" className="bg-white text-slate-800">English (India)</option>
+                <option value="bn" className="bg-white text-slate-800">বাংলা (Bengali)</option>
+                <option value="te" className="bg-white text-slate-800">తెలుగు (Telugu)</option>
+                <option value="ta" className="bg-white text-slate-800">தமிழ் (Tamil)</option>
+                <option value="mr" className="bg-white text-slate-800">मराठी (Marathi)</option>
+                <option value="gu" className="bg-white text-slate-800">ગુજરાતી (Gujarati)</option>
+                <option value="kn" className="bg-white text-slate-800">ಕನ್ನಡ (Kannada)</option>
               </select>
             </div>
           </div>
@@ -864,6 +912,21 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
               </form>
             </div>
           )}
+
+          {/* CORPORATE ATTRIBUTION FOOTER STRIP */}
+          <div className="bg-slate-900 text-slate-300 px-3 py-1.5 text-[10px] flex items-center justify-between border-t border-slate-800 shrink-0">
+            <span className="truncate">
+              By <strong className="text-white font-bold">Quench Research Labs Pvt. Ltd.</strong>
+            </span>
+            <a
+              href="https://arohiai.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-300 hover:text-amber-200 font-extrabold underline shrink-0 ml-2"
+            >
+              arohiai.com ↗
+            </a>
+          </div>
         </div>
       )}
     </div>

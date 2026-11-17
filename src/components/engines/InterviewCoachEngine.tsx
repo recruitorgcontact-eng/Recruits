@@ -566,7 +566,29 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
       {/* TAB 1: VOICE MOCK INTERVIEW ROOM */}
       {activeTab === "voice_mock" && (
         <div className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white space-y-5">
+            {/* Real-World Interview Studio Visual Banner */}
+            <div className="relative h-44 sm:h-52 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+              <img
+                src="/src/assets/images/ai_interview_coaching_studio_1794927483943.jpg"
+                alt="Confident Indian candidate in live AI Mock Interview Studio"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/60 to-transparent" />
+              <div className="absolute inset-y-0 left-5 flex flex-col justify-center max-w-lg space-y-1.5">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
+                  Recruits.org.in • Live Boardroom &amp; HR Simulator
+                </span>
+                <h4 className="text-base sm:text-xl font-black text-white leading-snug">
+                  Practice Real UPSC, OPSC, Banking &amp; Top MNC Interviews with Instant Feedback
+                </h4>
+                <p className="text-xs text-slate-300">
+                  Speak naturally in English, Hindi, or Odia and receive structured STAR scoring and confidence coaching.
+                </p>
+              </div>
+            </div>
+
             {/* Setup Parameters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
               <div>

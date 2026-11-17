@@ -76,7 +76,11 @@ export function exportToPDF(data: ResumeExportData) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139); // slate-500
-    doc.text(`ATS Optimization Score: ${data.analysisResult.atsScore}% | Benchmarked on Recruits.org.in`, margin, y);
+    doc.text(
+      `ATS Optimization Score: ${data.analysisResult.atsScore}% | Recruits.org.in • Powered by ArohiAI.com (Quench Research Labs Pvt. Ltd.)`,
+      margin,
+      y
+    );
     y += 6;
   }
 
@@ -188,7 +192,7 @@ export async function exportToDOCX(data: ResumeExportData) {
       new Paragraph({
         children: [
           new TextRun({
-            text: `ATS Compatibility Score: ${data.analysisResult.atsScore}% (Verified on Recruits.org.in)`,
+            text: `ATS Compatibility Score: ${data.analysisResult.atsScore}% (Verified on Recruits.org.in • Powered by ArohiAI.com | Quench Research Labs Private Limited)`,
             italics: true,
             size: 18, // 9pt
             color: "64748B",

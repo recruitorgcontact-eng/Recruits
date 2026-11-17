@@ -32,6 +32,7 @@ import {
   toggleJobStatus,
   deleteFreeJob,
   getJobApplications,
+  syncPlatformDataFromServer,
 } from "../../utils/jobStorage";
 import { AuthModal } from "../AuthModal";
 
@@ -84,6 +85,7 @@ export const RecruiterAssistantEngine: React.FC<RecruiterAssistantEngineProps> =
 
   useEffect(() => {
     refreshData();
+    syncPlatformDataFromServer();
     const handleJobsUpdated = () => refreshData();
     window.addEventListener("arohi_jobs_updated", handleJobsUpdated);
     return () => window.removeEventListener("arohi_jobs_updated", handleJobsUpdated);

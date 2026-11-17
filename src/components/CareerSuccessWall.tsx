@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { speakText, stopSpeech } from "../utils/speech";
 import { LanguageCode } from "../types";
+import { CompanyBrandLogo } from "./CompanyBrandLogo";
 
 export interface TransformationStory {
   id: string;
@@ -475,6 +476,50 @@ export const CareerSuccessWall: React.FC<CareerSuccessWallProps> = ({
         </div>
       </div>
 
+      {/* CONNECTED REAL-WORLD ALUMNI & PLACEMENT VISUAL BANNER */}
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          {
+            label: "OPSC, UPSC & State Secretariat Selections",
+            sub: "Verified Civil Services & Public Sector Appointments",
+            img: "/src/assets/images/track_govt_civil_services_1794910022761.jpg",
+            filter: "OPSC & State Govt",
+          },
+          {
+            label: "Top MNC Tech & AI Engineering Offers",
+            sub: "Placed at TCS, Infosys, Wipro & Tech Mahindra",
+            img: "/src/assets/images/track_it_cloud_ai_lab_1794910024883.jpg",
+            filter: "Tech & Software",
+          },
+          {
+            label: "SBI, HDFC & National Banking Selections",
+            sub: "Probationary Officers & Financial Analysts",
+            img: "/src/assets/images/track_banking_finance_hub_1794910026082.jpg",
+            filter: "Banking & SSC",
+          },
+        ].map((banner) => (
+          <div
+            key={banner.label}
+            onClick={() => setActiveCategory(banner.filter)}
+            className="group relative h-36 rounded-2xl overflow-hidden border border-slate-800 hover:border-amber-400/50 cursor-pointer bg-slate-950"
+          >
+            <img
+              src={banner.img}
+              alt={banner.label}
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent" />
+            <div className="absolute bottom-3 left-3.5 right-3.5">
+              <span className="text-[10px] font-bold text-amber-300 block">{banner.sub}</span>
+              <h4 className="text-xs sm:text-sm font-black text-white leading-snug">
+                {banner.label}
+              </h4>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* CATEGORY TABS & VIEW TOGGLE */}
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* CATEGORY FILTERS */}
@@ -563,16 +608,16 @@ export const CareerSuccessWall: React.FC<CareerSuccessWallProps> = ({
                   </span>
                 </div>
 
-                {/* TARGET ROLE & COMPANY */}
+                {/* TARGET ROLE & COMPANY WITH BRAND EMBLEM */}
                 <div className="bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-amber-300 shrink-0" />
-                    <div>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <CompanyBrandLogo name={story.companyOrDept} size="sm" />
+                    <div className="min-w-0">
                       <span className="text-slate-400 text-[10px] uppercase font-bold block">Appointed Role</span>
-                      <strong className="text-white font-extrabold">{story.targetRole}</strong>
+                      <strong className="text-white font-extrabold truncate block">{story.targetRole}</strong>
                     </div>
                   </div>
-                  <span className="text-[11px] text-slate-300 font-medium text-right max-w-[140px] truncate">
+                  <span className="text-[11px] text-slate-300 font-medium text-right max-w-[140px] truncate shrink-0">
                     {story.companyOrDept}
                   </span>
                 </div>

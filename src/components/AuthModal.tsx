@@ -46,7 +46,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
@@ -69,35 +69,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      const newProfile: UserProfile = {
-        id: `user-${Date.now()}`,
-        name: name || (authMode === "login" ? email.split("@")[0] : "User"),
-        email: email.trim(),
-        role: role,
-        organizationName: role === "recruiter" ? (organizationName || "Recruit Org Partner") : undefined,
-        designation: role === "recruiter" ? (designation || "Hiring Manager") : undefined,
-        phone: phone || "+91 9876543210",
-        location: location || "India",
-        createdAt: new Date().toISOString(),
-        isVerifiedRecruiter: role === "recruiter",
-      };
+    try {
+      const endpoint = authMode === "signup" ? "/api/auth/register" : "/api/auth/login";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          role,
+          organizationName: organizationName.trim(),
+          designation: designation.trim(),
+          phone: phone.trim(),
+          location: location.trim(),
+        }),
+      });
 
-      // Save to localStorage
-      localStorage.setItem("arohi_user_auth_profile", JSON.stringify(newProfile));
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Authentication failed. Please check your credentials.");
+        setLoading(false);
+        return;
+      }
+
+      const authedProfile: UserProfile = data.profile;
+      localStorage.setItem("arohi_user_auth_profile", JSON.stringify(authedProfile));
+      window.dispatchEvent(new Event("arohi_user_auth_updated"));
 
       setSuccessMsg(
         authMode === "signup"
-          ? `🎉 Welcome aboard! Successfully signed up as ${role === "recruiter" ? "Recruiter / Employer" : "Candidate / User"}.`
-          : `✅ Successfully logged in as ${newProfile.name}.`
+          ? `🎉 Welcome aboard! Registered as ${authedProfile.role === "recruiter" ? "Verified Recruiter / Employer" : "Candidate / Officer"}.`
+          : `✅ Logged in as ${authedProfile.name}.`
       );
+      setLoading(false);
 
       setTimeout(() => {
-        onAuthSuccess(newProfile);
+        onAuthSuccess(authedProfile);
         onClose();
-      }, 1200);
-    }, 600);
+      }, 900);
+    } catch (err) {
+      setLoading(false);
+      setErrorMsg("Network error while connecting to authentication server.");
+    }
   };
 
   return (
@@ -327,6 +341,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             </span>
           )}
+
+          <div className="mt-3 pt-2 border-t border-slate-100 text-[10px] text-slate-400">
+            Secured by{" "}
+            <a
+              href="https://arohiai.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 font-bold hover:underline"
+            >
+              arohiai.com
+            </a>{" "}
+            • <strong className="text-slate-600">Quench Research Labs Private Limited</strong>
+          </div>
         </div>
       </div>
     </div>

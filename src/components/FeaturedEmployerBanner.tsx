@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { LiveIndiaJob } from "../types";
 import { getStoredFreeJobs } from "../utils/jobStorage";
+import { CompanyBrandLogo } from "./CompanyBrandLogo";
 
 export interface FeaturedEmployer {
   id: string;
@@ -359,11 +360,9 @@ export const FeaturedEmployerBanner: React.FC<FeaturedEmployerBannerProps> = ({
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               {/* LEFT: COMPANY IDENTITY & HIGHLIGHTS */}
               <div className="space-y-3 max-w-2xl">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${currentEmp.logoBgGradient} flex items-center justify-center text-slate-950 font-black text-lg shadow-lg shrink-0 border border-white/20`}
-                  >
-                    {currentEmp.logoInitials}
+                <div className="flex items-center gap-3.5">
+                  <div className="bg-white px-3 py-2 rounded-2xl shadow-lg shrink-0 border border-white/30 flex items-center justify-center min-w-[64px] h-14">
+                    <CompanyBrandLogo name={currentEmp.name} size="banner" />
                   </div>
 
                   <div>
@@ -506,10 +505,8 @@ export const FeaturedEmployerBanner: React.FC<FeaturedEmployerBannerProps> = ({
             >
               <div className="flex items-start justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${selectedSpotlightEmployer.logoBgGradient} flex items-center justify-center text-slate-950 font-black text-base shadow`}
-                  >
-                    {selectedSpotlightEmployer.logoInitials}
+                  <div className="bg-white px-3 py-1.5 rounded-2xl shadow flex items-center justify-center h-12">
+                    <CompanyBrandLogo name={selectedSpotlightEmployer.name} size="banner" />
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-white">

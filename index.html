@@ -3,10 +3,56 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Arohi Career AI - Recruits.org.in</title>
-    <meta name="description" content="The Intelligent Career & Hiring Companion on Recruits.org.in featuring role-based candidate/recruiter authentication, live job crawling across India, and 100% free recruiter job posting facility." />
-    <meta property="og:title" content="Arohi Career AI - Recruits.org.in" />
-    <meta property="og:description" content="The Intelligent Career & Hiring Companion on Recruits.org.in featuring role-based candidate/recruiter authentication, live job crawling across India, and 100% free recruiter job posting facility." />
+    <title>Arohi Career AI - Recruits.org.in | Powered by ArohiAI.com</title>
+    <meta name="description" content="The Intelligent Career & Hiring Companion on Recruits.org.in powered by ArohiAI.com (Quench Research Labs Private Limited), featuring role-based candidate/recruiter authentication, live job crawling across India, and 100% free recruiter job posting facility." />
+    <meta property="og:title" content="Arohi Career AI - Recruits.org.in | Powered by ArohiAI.com" />
+    <meta property="og:description" content="The Intelligent Career & Hiring Companion on Recruits.org.in powered by ArohiAI.com (Quench Research Labs Private Limited), featuring role-based candidate/recruiter authentication, live job crawling across India, and 100% free recruiter job posting facility." />
+    <script>
+      (function () {
+        function isExtensionOrMetaMaskError(msg, stack, filename) {
+          var combined = String(msg || "") + " " + String(stack || "") + " " + String(filename || "");
+          return (
+            combined.indexOf("MetaMask") !== -1 ||
+            combined.indexOf("chrome-extension://") !== -1 ||
+            combined.indexOf("moz-extension://") !== -1 ||
+            combined.indexOf("inpage.js") !== -1
+          );
+        }
+
+        window.addEventListener(
+          "error",
+          function (event) {
+            if (
+              isExtensionOrMetaMaskError(
+                event.message,
+                event.error && event.error.stack,
+                event.filename
+              )
+            ) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              return false;
+            }
+          },
+          true
+        );
+
+        window.addEventListener(
+          "unhandledrejection",
+          function (event) {
+            var reason = event.reason;
+            var msg = reason && (reason.message || String(reason));
+            var stack = reason && reason.stack;
+            if (isExtensionOrMetaMaskError(msg, stack, "")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              return false;
+            }
+          },
+          true
+        );
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

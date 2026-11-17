@@ -50,8 +50,9 @@ import {
 } from "recharts";
 import { LiveIndiaJob, CareerMemory, JobAlertSubscription } from "../../types";
 import { INITIAL_LIVE_INDIA_JOBS } from "../../data/mockData";
-import { getStoredFreeJobs, submitCandidateApplication, getStoredUserProfile, saveFreeJob } from "../../utils/jobStorage";
+import { getStoredFreeJobs, submitCandidateApplication, getStoredUserProfile, saveFreeJob, syncPlatformDataFromServer } from "../../utils/jobStorage";
 import { FeaturedEmployerBanner } from "../FeaturedEmployerBanner";
+import { CompanyBrandLogo } from "../CompanyBrandLogo";
 
 const SECTOR_30_DAY_TREND_DATA = [
   { date: "Jun 25", Government: 120, Private: 210, Banking: 85, PSU: 45, Total: 460 },
@@ -138,8 +139,25 @@ export const LiveIndiaJobsEngine: React.FC<LiveIndiaJobsEngineProps> = ({
 
   useEffect(() => {
     loadJobsWithCustomFreePosts();
+    syncPlatformDataFromServer();
     const handleJobsUpdated = () => loadJobsWithCustomFreePosts();
     window.addEventListener("arohi_jobs_updated", handleJobsUpdated);
+
+    // Check for search/category handoff from HeroLandingPage
+    try {
+      const handoffRaw = sessionStorage.getItem("arohi_job_search_handoff");
+      if (handoffRaw) {
+        sessionStorage.removeItem("arohi_job_search_handoff");
+        const handoff = JSON.parse(handoffRaw);
+        if (handoff.query) setSearchQuery(handoff.query);
+        if (handoff.sector) setSelectedSector(handoff.sector);
+        if (handoff.category) setSelectedCategory(handoff.category);
+        if (handoff.location) setStateLocation(handoff.location);
+      }
+    } catch (err) {
+      console.warn("Could not read job search handoff:", err);
+    }
+
     return () => window.removeEventListener("arohi_jobs_updated", handleJobsUpdated);
   }, []);
 
@@ -884,12 +902,15 @@ export const LiveIndiaJobsEngine: React.FC<LiveIndiaJobsEngineProps> = ({
                     </span>
                   </div>
 
-                  {/* Title & Organization */}
-                  <div className="space-y-1">
-                    <h4 className="text-lg font-bold text-white leading-snug">{job.title}</h4>
-                    <p className="text-xs text-indigo-300 font-semibold flex items-center gap-1.5">
-                      <Building className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> {job.organization}
-                    </p>
+                  {/* Title & Organization with Authentic Brand / Agency Emblem */}
+                  <div className="flex items-start gap-3.5">
+                    <CompanyBrandLogo name={`${job.organization} ${job.title}`} size="md" className="mt-0.5" />
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <h4 className="text-lg font-bold text-white leading-snug">{job.title}</h4>
+                      <p className="text-xs text-indigo-300 font-semibold flex items-center gap-1.5">
+                        <Building className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> {job.organization}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Key Metadata Grid */}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   FileText,
   Sparkles,
@@ -22,7 +22,8 @@ import {
   Building,
   UserCheck,
   ExternalLink,
-  Layers
+  Layers,
+  Upload,
 } from "lucide-react";
 import { CareerMemory, ATSAnalysisResult } from "../../types";
 import { SAMPLE_RESUME_TEXT } from "../../data/mockData";
@@ -83,10 +84,112 @@ export const ResumeIntelligenceEngine: React.FC<ResumeIntelligenceEngineProps> =
   const [importingLinkedIn, setImportingLinkedIn] = useState(false);
   const [previewProfile, setPreviewProfile] = useState<LinkedInImportedProfile | null>(null);
   const [importSuccessMessage, setImportSuccessMessage] = useState<string | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const triggerImportToast = (msg: string) => {
     setImportSuccessMessage(msg);
     setTimeout(() => setImportSuccessMessage(null), 5000);
+  };
+
+  const applyParsedResumeResponse = (data: { profile?: LinkedInImportedProfile; atsAnalysis?: ATSAnalysisResult }, sourceName?: string) => {
+    if (data.profile) {
+      const p = data.profile;
+      const existingSkills = memory.skills || [];
+      const newSkills = p.skills || [];
+      const mergedSkills = Array.from(new Set([...existingSkills, ...newSkills]));
+
+      const updatedMemory: CareerMemory = {
+        ...memory,
+        targetRole: p.targetRole || p.headline || targetRole,
+        experienceYears: p.experienceYears || memory.experienceYears,
+        skills: mergedSkills,
+        education: p.education || memory.education,
+        certifications: p.certifications || memory.certifications,
+        preferredIndustries: p.preferredIndustries || memory.preferredIndustries,
+        preferredLocations: p.preferredLocations || memory.preferredLocations,
+        expectedSalaryINR: p.expectedSalaryINR || memory.expectedSalaryINR,
+        careerGoals: p.careerGoals || memory.careerGoals,
+        portfolioProjects:
+          p.portfolioProjects && p.portfolioProjects.length > 0
+            ? p.portfolioProjects
+            : memory.portfolioProjects,
+      };
+
+      if (onUpdateMemory) {
+        onUpdateMemory(updatedMemory);
+      }
+
+      if (p.fullName) setCandidateName(p.fullName);
+      if (p.targetRole) setTargetRole(p.targetRole);
+      if (p.formattedResumeText) {
+        setResumeText(p.formattedResumeText);
+        setAppliedRewrites(false);
+      }
+    }
+
+    if (data.atsAnalysis) {
+      setAnalysisResult(data.atsAnalysis);
+    }
+
+    triggerImportToast(
+      `✅ Parsed "${sourceName || "Resume"}" with Arohi Multimodal AI! Profile, skills & ATS score (${data.atsAnalysis?.atsScore || 85}%) synced to Career Memory.`
+    );
+  };
+
+  useEffect(() => {
+    try {
+      const pendingRaw = sessionStorage.getItem("arohi_uploaded_resume_payload");
+      if (pendingRaw) {
+        sessionStorage.removeItem("arohi_uploaded_resume_payload");
+        const parsed = JSON.parse(pendingRaw);
+        applyParsedResumeResponse(parsed.data, parsed.fileName);
+      }
+    } catch (err) {
+      console.error("Error reading pending uploaded resume:", err);
+    }
+  }, []);
+
+  const handleFileUploadChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const resultStr = String(reader.result || "");
+          const base64Data = resultStr.includes(",") ? resultStr.split(",")[1] : resultStr;
+          const res = await fetch("/api/ai/parse-resume-file", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: file.name,
+              mimeType: file.type || "application/pdf",
+              base64Data,
+              targetRole,
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            applyParsedResumeResponse(data, file.name);
+          } else {
+            triggerImportToast("⚠️ Could not parse resume file. Please try PDF, Image, or TXT format.");
+          }
+        } catch (innerErr) {
+          console.error("Error parsing uploaded resume:", innerErr);
+        } finally {
+          setUploadingFile(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("File read error:", err);
+      setUploadingFile(false);
+    }
   };
 
   const handleFetchLinkedInProfile = async (overrideUrl?: string) => {
@@ -266,8 +369,29 @@ export const ResumeIntelligenceEngine: React.FC<ResumeIntelligenceEngineProps> =
             </div>
           </div>
 
-          {/* Action Buttons: 1-Click LinkedIn Import + Export PDF / DOCX */}
+          {/* Action Buttons: Upload File + 1-Click LinkedIn Import + Export PDF / DOCX */}
           <div className="flex items-center gap-2 flex-wrap">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx"
+              onChange={handleFileUploadChange}
+              className="hidden"
+            />
+            <button
+              id="btn-upload-resume-file"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingFile}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/30 cursor-pointer border border-emerald-400/30 disabled:opacity-50"
+            >
+              {uploadingFile ? (
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+              ) : (
+                <Upload className="w-4 h-4 shrink-0" />
+              )}
+              <span>{uploadingFile ? "AI Parsing File..." : "Upload Resume (PDF/DOCX/IMG)"}</span>
+            </button>
+
             <button
               id="btn-import-linkedin"
               onClick={() => setShowLinkedInModal(true)}

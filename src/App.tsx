@@ -22,6 +22,7 @@ import { LiveIndiaJobsEngine } from "./components/engines/LiveIndiaJobsEngine";
 import { SkillMastery } from "./components/SkillMastery";
 import { ArohiFloatingAgent } from "./components/ArohiFloatingAgent";
 import { AuthModal } from "./components/AuthModal";
+import { Footer } from "./components/Footer";
 import { stopSpeech } from "./utils/speech";
 
 export default function App() {
@@ -242,6 +243,20 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* Global Corporate Footer (Quench Research Labs Private Limited & ArohiAI.com) */}
+      <Footer
+        onNavigateToEngine={(engineId, role) => {
+          if (role) handleRoleModeChange(role);
+          setActiveEngineId(engineId);
+          setCurrentView("workspace");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onNavigateHome={() => {
+          setCurrentView("landing");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
       {/* Modals */}
       <CareerScoreCard
