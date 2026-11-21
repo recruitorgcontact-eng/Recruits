@@ -129,7 +129,7 @@ export const EngineSelector: React.FC<EngineSelectorProps> = ({
 
   return (
     <div className="mb-6 overflow-x-auto pb-2 scrollbar-none">
-      <div className="flex items-center gap-2 min-w-max bg-white/90 backdrop-blur-2xl p-2 rounded-2xl border border-slate-200/80 shadow-md">
+      <div className="flex items-center gap-1.5 min-w-max glass-apple p-1.5 rounded-2xl">
         {visibleEngines.map((engine) => {
           const Icon = engine.icon;
           const isActive = activeEngineId === engine.id;
@@ -139,16 +139,28 @@ export const EngineSelector: React.FC<EngineSelectorProps> = ({
               key={engine.id}
               id={`tab-engine-${engine.id}`}
               onClick={() => onSelectEngine(engine.id)}
-              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 ${
                 isActive
-                  ? "bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20 border border-indigo-400/40 scale-[1.02]"
-                  : "bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60"
+                  ? "btn-apple-primary text-white border border-white/25"
+                  : "bg-white/45 hover:bg-white/85 text-slate-700 hover:text-slate-950 border border-transparent hover:border-white/90"
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-indigo-600"}`} />
+              <div
+                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition ${
+                  isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-indigo-500/10 text-indigo-600"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+              </div>
               <div className="flex flex-col items-start text-left">
-                <span>{engine.label}</span>
-                <span className={`text-[10px] font-normal ${isActive ? "text-indigo-100" : "text-slate-500"}`}>
+                <span className="leading-tight tracking-tight">{engine.label}</span>
+                <span
+                  className={`text-[10px] font-medium leading-tight mt-0.5 ${
+                    isActive ? "text-indigo-100/95" : "text-slate-500"
+                  }`}
+                >
                   {engine.shortDesc}
                 </span>
               </div>

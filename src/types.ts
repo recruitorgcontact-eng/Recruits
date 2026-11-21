@@ -4,6 +4,13 @@ export type LanguageCode = 'en' | 'hi' | 'or' | 'ta' | 'te' | 'kn' | 'mr' | 'gu'
 
 export interface CareerMemory {
   permissionGranted: boolean;
+  personalInfo?: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+  };
+  lastSyncedAt?: string;
   education: {
     degree: string;
     field: string;

@@ -31,35 +31,35 @@ export interface IndianLocaleVoiceConfig {
 export const INDIAN_SPEECH_LOCALE_CONFIG: Record<LanguageCode, IndianLocaleVoiceConfig> = {
   or: {
     locale: "or-IN",
-    fallbackLocales: ["or-IN", "hi-IN", "bn-IN", "en-IN"],
-    pitch: 1.08, // Warm, melodic Odia elder-sister (Didi/Apa) timbre
-    questionPitchBoost: 0.04,
-    greetingPitchBoost: 0.03,
-    rate: 0.94, // Slightly gentler cadence for clear Odia vowel & retroflex articulation
-    neuralPlaybackRate: 0.97,
+    fallbackLocales: ["or-IN", "bn-IN", "hi-IN", "en-IN"],
+    pitch: 1.06, // Warm, natural Odia elder-sister (Didi/Apa) timbre
+    questionPitchBoost: 0.03,
+    greetingPitchBoost: 0.02,
+    rate: 0.96, // Smooth, natural Odia conversational cadence
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: [
       "subhasini",
       "odia",
       "or-in",
       "oriya",
-      "swara",
       "tanishaa",
+      "swara",
       "neerja",
       "aditi",
       "veena",
     ],
     culturalStylePrompt:
-      "Locale: or-IN (Odia, Odisha India). Pitch: +8% warm young Indian female timbre. Rate: 0.94x unhurried, melodic Odia conversational rhythm with soft dental/retroflex articulation, affectionate elder-sister (Didi/Apa) warmth, and natural pauses after 'Namaskar' and 'Nischaya'.",
+      "Locale: or-IN (Odia, Odisha India). Pitch: +6% warm young Odia female timbre. Rate: 0.96x natural, melodic Odia conversational rhythm with soft dental/retroflex articulation, affectionate elder-sister (Didi/Apa) warmth, and natural pauses after 'Namaskar' and 'Nischaya'.",
   },
   hi: {
     locale: "hi-IN",
     fallbackLocales: ["hi-IN", "mr-IN", "en-IN"],
-    pitch: 1.06, // Expressive, friendly young Indian female Hindi voice
-    questionPitchBoost: 0.04,
-    greetingPitchBoost: 0.03,
-    rate: 0.96, // Balanced conversational Hindi pacing
-    neuralPlaybackRate: 0.98,
+    pitch: 1.05, // Expressive, natural young Indian female Hindi voice
+    questionPitchBoost: 0.03,
+    greetingPitchBoost: 0.02,
+    rate: 0.98, // Balanced conversational Hindi pacing
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: [
       "swara",
@@ -73,16 +73,16 @@ export const INDIAN_SPEECH_LOCALE_CONFIG: Record<LanguageCode, IndianLocaleVoice
       "veena",
     ],
     culturalStylePrompt:
-      "Locale: hi-IN (Hindi, India). Pitch: +6% warm, expressive young Indian female mentor voice. Rate: 0.96x natural conversational Hindi cadence with respectful warmth on 'Namaste ji', 'Bilkul', and 'Zaroor'.",
+      "Locale: hi-IN (Hindi, India). Pitch: +5% warm, expressive young Indian female mentor voice. Rate: 0.98x natural conversational Hindi cadence with respectful warmth on 'Namaste ji', 'Bilkul', and 'Zaroor'.",
   },
   en: {
     locale: "en-IN",
     fallbackLocales: ["en-IN", "hi-IN"],
-    pitch: 1.05, // Bright, articulate young Indian professional English pitch
+    pitch: 1.04, // Bright, articulate young Indian professional English pitch
     questionPitchBoost: 0.03,
     greetingPitchBoost: 0.02,
-    rate: 0.97, // Crisp, syllable-timed Indian English rhythm
-    neuralPlaybackRate: 0.99,
+    rate: 0.98, // Crisp, syllable-timed Indian English rhythm
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: [
       "neerja",
@@ -97,33 +97,33 @@ export const INDIAN_SPEECH_LOCALE_CONFIG: Record<LanguageCode, IndianLocaleVoice
       "en-in",
     ],
     culturalStylePrompt:
-      "Locale: en-IN (Indian English). Pitch: +5% bright, relatable young Indian female career coach. Rate: 0.97x natural syllable-timed Indian English prosody with warm inflection on 'Namaste', 'definitely', and 'all the very best'.",
+      "Locale: en-IN (Indian English). Pitch: +4% bright, relatable young Indian female career coach. Rate: 0.98x natural syllable-timed Indian English prosody with warm inflection on 'Namaste', 'definitely', and 'all the very best'.",
   },
   bn: {
     locale: "bn-IN",
     fallbackLocales: ["bn-IN", "hi-IN", "en-IN"],
-    pitch: 1.07,
+    pitch: 1.06,
     questionPitchBoost: 0.03,
-    greetingPitchBoost: 0.03,
-    rate: 0.95,
-    neuralPlaybackRate: 0.98,
+    greetingPitchBoost: 0.02,
+    rate: 0.97,
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: ["tanishaa", "bengali", "bn-in", "swara", "neerja"],
     culturalStylePrompt:
-      "Locale: bn-IN (Bengali, India). Pitch: +7% sweet, cultured young Indian female mentor voice. Rate: 0.95x warm Bengali cadence.",
+      "Locale: bn-IN (Bengali, India). Pitch: +6% sweet, cultured young Indian female mentor voice. Rate: 0.97x warm Bengali cadence.",
   },
   te: {
     locale: "te-IN",
     fallbackLocales: ["te-IN", "en-IN", "hi-IN"],
-    pitch: 1.06,
+    pitch: 1.05,
     questionPitchBoost: 0.03,
     greetingPitchBoost: 0.02,
-    rate: 0.95,
-    neuralPlaybackRate: 0.98,
+    rate: 0.97,
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: ["shruti", "telugu", "te-in", "neerja", "veena"],
     culturalStylePrompt:
-      "Locale: te-IN (Telugu, India). Pitch: +6% warm young Indian female mentor voice. Rate: 0.95x clear, melodic Telugu cadence.",
+      "Locale: te-IN (Telugu, India). Pitch: +5% warm young Indian female mentor voice. Rate: 0.97x clear, melodic Telugu cadence.",
   },
   ta: {
     locale: "ta-IN",
@@ -131,51 +131,51 @@ export const INDIAN_SPEECH_LOCALE_CONFIG: Record<LanguageCode, IndianLocaleVoice
     pitch: 1.05,
     questionPitchBoost: 0.03,
     greetingPitchBoost: 0.02,
-    rate: 0.95,
-    neuralPlaybackRate: 0.98,
+    rate: 0.97,
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: ["pallavi", "valluvar", "tamil", "ta-in", "neerja", "veena"],
     culturalStylePrompt:
-      "Locale: ta-IN (Tamil, India). Pitch: +5% warm, respectful young Indian female mentor voice. Rate: 0.95x clear Tamil cadence.",
+      "Locale: ta-IN (Tamil, India). Pitch: +5% warm, respectful young Indian female mentor voice. Rate: 0.97x clear Tamil cadence.",
   },
   mr: {
     locale: "mr-IN",
     fallbackLocales: ["mr-IN", "hi-IN", "en-IN"],
-    pitch: 1.06,
+    pitch: 1.05,
     questionPitchBoost: 0.03,
     greetingPitchBoost: 0.02,
-    rate: 0.96,
-    neuralPlaybackRate: 0.98,
+    rate: 0.97,
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: ["aarohi", "marathi", "mr-in", "swara", "neerja"],
     culturalStylePrompt:
-      "Locale: mr-IN (Marathi, India). Pitch: +6% warm young Indian female mentor voice. Rate: 0.96x natural Marathi cadence.",
+      "Locale: mr-IN (Marathi, India). Pitch: +5% warm young Indian female mentor voice. Rate: 0.97x natural Marathi cadence.",
   },
   gu: {
     locale: "gu-IN",
     fallbackLocales: ["gu-IN", "hi-IN", "en-IN"],
-    pitch: 1.06,
+    pitch: 1.05,
     questionPitchBoost: 0.03,
     greetingPitchBoost: 0.02,
-    rate: 0.96,
-    neuralPlaybackRate: 0.98,
+    rate: 0.97,
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: ["dhwani", "gujarati", "gu-in", "swara", "neerja"],
     culturalStylePrompt:
-      "Locale: gu-IN (Gujarati, India). Pitch: +6% cheerful young Indian female mentor voice. Rate: 0.96x natural Gujarati cadence.",
+      "Locale: gu-IN (Gujarati, India). Pitch: +5% cheerful young Indian female mentor voice. Rate: 0.97x natural Gujarati cadence.",
   },
   kn: {
     locale: "kn-IN",
     fallbackLocales: ["kn-IN", "en-IN", "hi-IN"],
-    pitch: 1.06,
+    pitch: 1.05,
     questionPitchBoost: 0.03,
     greetingPitchBoost: 0.02,
-    rate: 0.95,
-    neuralPlaybackRate: 0.98,
+    rate: 0.97,
+    neuralPlaybackRate: 1.0,
     volume: 1.0,
     preferredVoiceKeywords: ["sapna", "kannada", "kn-in", "neerja", "veena"],
     culturalStylePrompt:
-      "Locale: kn-IN (Kannada, India). Pitch: +6% warm, articulate young Indian female mentor voice. Rate: 0.95x clear Kannada cadence.",
+      "Locale: kn-IN (Kannada, India). Pitch: +5% warm, articulate young Indian female mentor voice. Rate: 0.97x clear Kannada cadence.",
   },
 };
 
@@ -194,6 +194,7 @@ const LANGUAGE_VOICE_MAP: Record<LanguageCode, string> = {
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let currentAudioElement: HTMLAudioElement | null = null;
 let currentObjectUrl: string | null = null;
+let activeSpeechRequestId = 0;
 let cachedBrowserVoices: SpeechSynthesisVoice[] = [];
 const clientTtsCache = new Map<string, { audioBase64: string; mimeType: string }>();
 
@@ -213,8 +214,16 @@ export const isOdiaText = (text: string): boolean => {
   if (!text) return false;
   const odiaScriptRegex = /[\u0B00-\u0B7F]/;
   const odiaPhoneticRegex =
-    /\b(namaskar|mote|darkar|chakiri|kemiti|achanti|karichi|odisha|orisha|btech|odia|khobar|kisa|kana|ghara|mu|aapan|dhanyabad|nischaya|chinta)\b/i;
+    /\b(namaskar|mote|darkar|chakiri|kemiti|achanti|karichi|karibi|odisha|orisha|odia|khobar|kisa|kana|ghara|mu|aapan|apana|dhanyabad|nischaya|chinta|kuhantu|kuha|kipari|kebe|kou|didi|apa|pai|katha|bisayare|sahajya|bhal)\b/i;
   return odiaScriptRegex.test(text) || odiaPhoneticRegex.test(text);
+};
+
+export const isHindiText = (text: string): boolean => {
+  if (!text) return false;
+  const hindiScriptRegex = /[\u0900-\u097F]/;
+  const hindiPhoneticRegex =
+    /\b(namaste|mujhe|mera|meri|mere|kya|kaise|kaisi|chahiye|naukri|sarkari|taiyari|batao|bataiye|bataye|madad|karna|karen|karu|hai|hain|mein|aur|accha|bahut|dhanyawad|shukriya|zaroor|bilkul|aap|hum|kahan|kab|kyun|koi|abhi|milegi|milega|padhai|pariksha)\b/i;
+  return hindiScriptRegex.test(text) || hindiPhoneticRegex.test(text);
 };
 
 export const detectIndianLanguageFromText = (
@@ -222,61 +231,134 @@ export const detectIndianLanguageFromText = (
   fallbackLanguage: LanguageCode = "en"
 ): LanguageCode => {
   if (!text) return fallbackLanguage;
-  if (isOdiaText(text)) return "or";
-  if (/[\u0980-\u09FF]/.test(text)) return "bn";
-  if (/[\u0C00-\u0C7F]/.test(text)) return "te";
-  if (/[\u0B80-\u0BFF]/.test(text)) return "ta";
-  if (/[\u0A80-\u0AFF]/.test(text)) return "gu";
-  if (/[\u0C80-\u0CFF]/.test(text)) return "kn";
-  if (/[\u0900-\u097F]/.test(text)) {
-    return fallbackLanguage === "mr" ? "mr" : "hi";
+  const trimmed = text.trim();
+
+  // 1. Explicit language switch requests
+  if (/\b(speak in odia|talk in odia|odia re|oriya|ଓଡ଼ିଆରେ|ओड़िया में)\b/i.test(trimmed)) return "or";
+  if (/\b(speak in hindi|talk in hindi|hindi mein|हिंदी में|हिन्दी में)\b/i.test(trimmed)) return "hi";
+  if (/\b(speak in english|talk in english|in english please|इंग्लिश में|ଇଂରାଜୀରେ)\b/i.test(trimmed)) return "en";
+
+  // 2. Native Indian scripts
+  if (/[\u0B00-\u0B7F]/.test(trimmed)) return "or";
+  if (/[\u0980-\u09FF]/.test(trimmed)) return "bn";
+  if (/[\u0C00-\u0C7F]/.test(trimmed)) return "te";
+  if (/[\u0B80-\u0BFF]/.test(trimmed)) return "ta";
+  if (/[\u0A80-\u0AFF]/.test(trimmed)) return "gu";
+  if (/[\u0C80-\u0CFF]/.test(trimmed)) return "kn";
+  if (/[\u0900-\u097F]/.test(trimmed)) {
+    if (/\b(आहे|कसे|तुम्ही|मला|माझ्या|सांगा|करू)\b/.test(trimmed) || fallbackLanguage === "mr") {
+      return "mr";
+    }
+    return "hi";
   }
+
+  // 3. Spoken / Romanized Odia or Hindi
+  if (isOdiaText(trimmed)) return "or";
+  if (isHindiText(trimmed)) return "hi";
+
+  // 4. Clear English sentence check (if user switched back to English during a Hindi/Odia session)
+  const englishWordsRegex =
+    /\b(what|how|when|where|which|can|could|should|would|please|tell|help|give|show|prepare|job|jobs|resume|interview|salary|course|courses|exam|company|about|my|for|the|in|is|are)\b/i;
+  const words = trimmed.split(/\s+/);
+  const englishMatches = words.filter((w) => englishWordsRegex.test(w)).length;
+  if (englishMatches >= 2 && /^[a-zA-Z0-9\s.,?!'"-]+$/.test(trimmed)) {
+    return "en";
+  }
+
   return fallbackLanguage;
 };
 
 /**
- * Normalizes markdown, Indian currency (₹ / LPA / Crores), exam acronyms (OPSC, UPSC, SSC, IBPS),
- * and inserts subtle conversational breath pauses after Indian greetings for natural cadence.
+ * Normalizes markdown, Indian currency (₹ / LPA / Crores), and exam/company acronyms
+ * into native Odia script (when language === 'or'), native Devanagari (when language === 'hi'),
+ * or Indian English phonetics so TTS never switches into a robotic cross-script reader.
  */
 const applyIndianCulturalProsody = (rawText: string, language: LanguageCode): string => {
   let cleaned = (rawText || "")
-    .replace(/\*\*(.*?)\*\*/g, "$1")
-    .replace(/\*(.*?)\*/g, "$1")
-    .replace(/#+\s+/g, "")
     .replace(/\[(.*?)\]\(.*?\)/g, "$1")
-    .replace(/`{1,3}.*?`{1,3}/g, "")
-    .replace(/30-year-old|30-वर्षीय|୩୦ ବର୍ଷୀୟ/gi, "")
+    .replace(/[*_#`~]+/g, "")
     .replace(
-      /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,
+      /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}]/gu,
       ""
     )
     .replace(/•/g, ", ");
 
-  // Natural pronunciation of domain & Indian career terms
-  cleaned = cleaned
-    .replace(/recruits\.org\.in/gi, "Recruits dot org dot in")
-    .replace(/arohiai\.com/gi, "Arohi A I dot com")
-    .replace(/₹\s*(\d+(?:\.\d+)?)\s*-\s*₹?\s*(\d+(?:\.\d+)?)\s*LPA/gi, "$1 to $2 Lakhs Per Annum")
-    .replace(/₹\s*(\d+(?:\.\d+)?)\s*LPA/gi, "$1 Lakhs Per Annum")
-    .replace(/\b(\d+(?:\.\d+)?)\s*LPA\b/gi, "$1 Lakhs Per Annum")
-    .replace(/₹\s*([\d,]+)/g, "$1 Rupees")
-    .replace(/\bB\.?E\.?\s*\/\s*B\.?Tech\b/gi, "B E or B Tech")
-    .replace(/\bB\.?Tech\b/gi, "B Tech")
-    .replace(/\bM\.?Tech\b/gi, "M Tech")
-    .replace(/\bOPSC\b/g, "O P S C")
-    .replace(/\bOSSC\b/g, "O S S C")
-    .replace(/\bUPSC\b/g, "U P S C")
-    .replace(/\bIBPS\b/g, "I B P S");
-
-  // Add a gentle conversational pause after Indian greetings so Arohi's voice breathes naturally
   if (language === "or") {
-    cleaned = cleaned.replace(/ନମସ୍କାର\s*!*/g, "ନମସ୍କାର, ");
+    cleaned = cleaned
+      .replace(/recruits\.org\.in/gi, "ରିକ୍ରୁଟ୍ସ ଡଟ୍ ଓଆରଜି ଡଟ୍ ଇନ୍")
+      .replace(/arohiai\.com/gi, "ଆରୋହୀ ଏଆଇ ଡଟ୍ କମ୍")
+      .replace(/\bOPSC\b/gi, "ଓପିଏସସି")
+      .replace(/\bOSSC\b/gi, "ଓଏସଏସସି")
+      .replace(/\bOSSSC\b/gi, "ଓଏସଏସଏସସି")
+      .replace(/\bUPSC\b/gi, "ୟୁପିଏସସି")
+      .replace(/\bSSC\b/gi, "ଏସଏସସି")
+      .replace(/\bIBPS\b/gi, "ଆଇବିପିଏସ୍")
+      .replace(/\bSBI\b/gi, "ଏସବିଆଇ")
+      .replace(/\bRRB\b/gi, "ଆରଆରବି")
+      .replace(/\bTCS\b/gi, "ଟିସିଏସ୍")
+      .replace(/\bInfosys\b/gi, "ଇନଫୋସିସ୍")
+      .replace(/\bWipro\b/gi, "ୱିପ୍ରୋ")
+      .replace(/\bHDFC\s*Bank\b/gi, "ଏଚଡିଏଫସି ବ୍ୟାଙ୍କ୍")
+      .replace(/\bHDFC\b/gi, "ଏଚଡିଏଫସି")
+      .replace(/\bReliance\b/gi, "ରିଲାଏନ୍ସ")
+      .replace(/\bTech\s*Mahindra\b/gi, "ଟେକ୍ ମହିନ୍ଦ୍ରା")
+      .replace(/\bNALCO\b/gi, "ନାଲକୋ")
+      .replace(/\bOMC\b/gi, "ଓଏମସି")
+      .replace(/\bPSU\b/gi, "ପିଏସୟୁ")
+      .replace(/\bMNC\b/gi, "ଏମଏନସି")
+      .replace(/\bATS\b/gi, "ଏଟିଏସ୍")
+      .replace(/\bAI\b/gi, "ଏଆଇ")
+      .replace(/\bB\.?Tech\b/gi, "ବି-ଟେକ୍")
+      .replace(/\bM\.?Tech\b/gi, "ଏମ୍-ଟେକ୍")
+      .replace(/₹\s*(\d+(?:\.\d+)?)\s*LPA/gi, "$1 ଲକ୍ଷ ଟଙ୍କା ବାର୍ଷିକ")
+      .replace(/\b(\d+(?:\.\d+)?)\s*LPA\b/gi, "$1 ଲକ୍ଷ ଟଙ୍କା ବାର୍ଷିକ")
+      .replace(/₹\s*([\d,]+)/g, "$1 ଟଙ୍କା")
+      .replace(/ନମସ୍କାର\s*!*/g, "ନମସ୍କାର, ");
   } else if (language === "hi") {
     cleaned = cleaned
+      .replace(/recruits\.org\.in/gi, "रिक्रूट्स डॉट ओआरजी डॉट इन")
+      .replace(/arohiai\.com/gi, "आरोही एआई डॉट कॉम")
+      .replace(/\bOPSC\b/gi, "ओपीएससी")
+      .replace(/\bOSSC\b/gi, "ओएसएससी")
+      .replace(/\bUPSC\b/gi, "यूपीएससी")
+      .replace(/\bSSC\b/gi, "एसएससी")
+      .replace(/\bIBPS\b/gi, "आईबीपीएस")
+      .replace(/\bSBI\b/gi, "एसबीआई")
+      .replace(/\bRRB\b/gi, "आरआरबी")
+      .replace(/\bTCS\b/gi, "टीसीएस")
+      .replace(/\bInfosys\b/gi, "इन्फोसिस")
+      .replace(/\bWipro\b/gi, "विप्रो")
+      .replace(/\bHDFC\s*Bank\b/gi, "एचडीएफसी बैंक")
+      .replace(/\bHDFC\b/gi, "एचडीएफसी")
+      .replace(/\bReliance\b/gi, "रिलायंस")
+      .replace(/\bTech\s*Mahindra\b/gi, "टेक महिंद्रा")
+      .replace(/\bNALCO\b/gi, "नालको")
+      .replace(/\bPSU\b/gi, "पीएसयू")
+      .replace(/\bMNC\b/gi, "एमएनसी")
+      .replace(/\bATS\b/gi, "एटीएस")
+      .replace(/\bAI\b/gi, "एआई")
+      .replace(/\bB\.?Tech\b/gi, "बीटेक")
+      .replace(/\bM\.?Tech\b/gi, "एमटेक")
+      .replace(/₹\s*(\d+(?:\.\d+)?)\s*LPA/gi, "$1 लाख रुपये सालाना")
+      .replace(/\b(\d+(?:\.\d+)?)\s*LPA\b/gi, "$1 लाख रुपये सालाना")
+      .replace(/₹\s*([\d,]+)/g, "$1 रुपये")
       .replace(/नमस्ते जी\s*!*/g, "नमस्ते जी, ")
       .replace(/नमस्ते\s*!*/g, "नमस्ते, ");
-  } else if (language === "en") {
+  } else {
     cleaned = cleaned
+      .replace(/recruits\.org\.in/gi, "Recruits dot org dot in")
+      .replace(/arohiai\.com/gi, "Arohi A I dot com")
+      .replace(/₹\s*(\d+(?:\.\d+)?)\s*-\s*₹?\s*(\d+(?:\.\d+)?)\s*LPA/gi, "$1 to $2 Lakhs Per Annum")
+      .replace(/₹\s*(\d+(?:\.\d+)?)\s*LPA/gi, "$1 Lakhs Per Annum")
+      .replace(/\b(\d+(?:\.\d+)?)\s*LPA\b/gi, "$1 Lakhs Per Annum")
+      .replace(/₹\s*([\d,]+)/g, "$1 Rupees")
+      .replace(/\bB\.?E\.?\s*\/\s*B\.?Tech\b/gi, "B E or B Tech")
+      .replace(/\bB\.?Tech\b/gi, "B Tech")
+      .replace(/\bM\.?Tech\b/gi, "M Tech")
+      .replace(/\bOPSC\b/g, "O P S C")
+      .replace(/\bOSSC\b/g, "O S S C")
+      .replace(/\bUPSC\b/g, "U P S C")
+      .replace(/\bIBPS\b/g, "I B P S")
       .replace(/\bNamaste\s*&\s*Hello\s*!*/gi, "Namaste, ")
       .replace(/\bNamaste\s*!*/gi, "Namaste, ")
       .replace(/\bNamaskar\s*!*/gi, "Namaskar, ");
@@ -343,8 +425,11 @@ const playBase64Audio = async (
   audioBase64: string,
   mimeType: string,
   localeConfig: IndianLocaleVoiceConfig,
-  fallbackOptions: SpeechOptions
+  fallbackOptions: SpeechOptions,
+  requestId: number
 ) => {
+  if (requestId !== activeSpeechRequestId) return;
+
   const binaryString = window.atob(audioBase64);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
@@ -357,11 +442,14 @@ const playBase64Audio = async (
   const audio = new Audio(audioUrl);
   currentAudioElement = audio;
 
-  // Apply locale-specific speaking rate adjustment for natural Indian cadence
   const desiredRate = fallbackOptions.rateOverride ?? localeConfig.neuralPlaybackRate;
-  audio.playbackRate = Math.max(0.85, Math.min(1.15, desiredRate));
+  audio.playbackRate = Math.max(0.9, Math.min(1.12, desiredRate));
 
   audio.onplay = () => {
+    if (requestId !== activeSpeechRequestId) {
+      stopSpeech();
+      return;
+    }
     fallbackOptions.onStart?.();
   };
 
@@ -371,7 +459,9 @@ const playBase64Audio = async (
       currentObjectUrl = null;
     }
     currentAudioElement = null;
-    fallbackOptions.onEnd?.();
+    if (requestId === activeSpeechRequestId) {
+      fallbackOptions.onEnd?.();
+    }
   };
 
   audio.onerror = () => {
@@ -380,7 +470,9 @@ const playBase64Audio = async (
       currentObjectUrl = null;
     }
     currentAudioElement = null;
-    speakWebSpeech(fallbackOptions);
+    if (requestId === activeSpeechRequestId) {
+      speakWebSpeech(fallbackOptions, requestId);
+    }
   };
 
   await audio.play();
@@ -396,6 +488,7 @@ export const speakText = async ({
   onError,
 }: SpeechOptions) => {
   stopSpeech();
+  const requestId = ++activeSpeechRequestId;
 
   const detectedLanguage: LanguageCode = detectIndianLanguageFromText(text, language);
   const localeConfig =
@@ -412,45 +505,11 @@ export const speakText = async ({
   const cachedAudio = clientTtsCache.get(cacheKey);
   if (cachedAudio) {
     try {
-      await playBase64Audio(cachedAudio.audioBase64, cachedAudio.mimeType, localeConfig, {
-        text: cleanedText,
-        language: detectedLanguage,
-        pitchOverride,
-        rateOverride,
-        onStart,
-        onEnd,
-        onError,
-      });
-      return;
-    } catch (_err) {
-      // Fall through to Web Speech if autoplay fails
-    }
-  }
-
-  // Try Server Gemini 3.8 Neural TTS with Indian locale, pitch, and rate prosody metadata
-  try {
-    const res = await fetch("/api/ai/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: cleanedText,
-        voice: "Aoede",
-        language: detectedLanguage,
-        locale: localeConfig.locale,
-        pitch: pitchOverride ?? localeConfig.pitch,
-        rate: rateOverride ?? localeConfig.rate,
-        stylePrompt: localeConfig.culturalStylePrompt,
-      }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data.audioBase64) {
-        const mimeType = data.mimeType || "audio/wav";
-        if (clientTtsCache.size < 100) {
-          clientTtsCache.set(cacheKey, { audioBase64: data.audioBase64, mimeType });
-        }
-        await playBase64Audio(data.audioBase64, mimeType, localeConfig, {
+      await playBase64Audio(
+        cachedAudio.audioBase64,
+        cachedAudio.mimeType,
+        localeConfig,
+        {
           text: cleanedText,
           language: detectedLanguage,
           pitchOverride,
@@ -458,7 +517,58 @@ export const speakText = async ({
           onStart,
           onEnd,
           onError,
-        });
+        },
+        requestId
+      );
+      return;
+    } catch (_err) {
+      // Fall through if autoplay fails
+    }
+  }
+
+  // Request Server Neural TTS (Gemini 3.8 TTS + Cloud Indian Neural TTS fallback)
+  try {
+    const res = await fetch("/api/ai/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: cleanedText,
+        voice: "Zephyr",
+        language: detectedLanguage,
+        locale: localeConfig.locale,
+        pitch: pitchOverride ?? localeConfig.pitch,
+        rate: rateOverride ?? localeConfig.rate,
+        stylePrompt: "Warm, melodious, friendly, and expressive conversational speaker",
+      }),
+    });
+
+    // If user barged in while TTS was loading, abort immediately
+    if (requestId !== activeSpeechRequestId) {
+      return;
+    }
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.audioBase64 && requestId === activeSpeechRequestId) {
+        const mimeType = data.mimeType || "audio/wav";
+        if (clientTtsCache.size < 100) {
+          clientTtsCache.set(cacheKey, { audioBase64: data.audioBase64, mimeType });
+        }
+        await playBase64Audio(
+          data.audioBase64,
+          mimeType,
+          localeConfig,
+          {
+            text: cleanedText,
+            language: detectedLanguage,
+            pitchOverride,
+            rateOverride,
+            onStart,
+            onEnd,
+            onError,
+          },
+          requestId
+        );
         return;
       }
     }
@@ -466,16 +576,23 @@ export const speakText = async ({
     // Seamless fallback to Indian neural browser voice
   }
 
-  // Fallback to Web Speech API with locale-specific pitch, rate, and prosodic intonation
-  speakWebSpeech({
-    text: cleanedText,
-    language: detectedLanguage,
-    pitchOverride,
-    rateOverride,
-    onStart,
-    onEnd,
-    onError,
-  });
+  if (requestId !== activeSpeechRequestId) {
+    return;
+  }
+
+  // Fallback to Web Speech API with continuous single-utterance prosody (no artificial gaps)
+  speakWebSpeech(
+    {
+      text: cleanedText,
+      language: detectedLanguage,
+      pitchOverride,
+      rateOverride,
+      onStart,
+      onEnd,
+      onError,
+    },
+    requestId
+  );
 };
 
 // Web Audio API Chime Sound Generators for Super Natural Call Feeling
@@ -532,15 +649,18 @@ export const playCallChime = (type: "ring" | "connect" | "disconnect") => {
   }
 };
 
-const speakWebSpeech = ({
-  text,
-  language = "en",
-  pitchOverride,
-  rateOverride,
-  onStart,
-  onEnd,
-  onError,
-}: SpeechOptions) => {
+const speakWebSpeech = (
+  {
+    text,
+    language = "en",
+    pitchOverride,
+    rateOverride,
+    onStart,
+    onEnd,
+    onError,
+  }: SpeechOptions,
+  requestId: number
+) => {
   if (!("speechSynthesis" in window)) {
     onError?.("Speech synthesis not supported in this browser.");
     onEnd?.();
@@ -548,6 +668,8 @@ const speakWebSpeech = ({
   }
 
   try {
+    if (requestId !== activeSpeechRequestId) return;
+
     const detectedLanguage = detectIndianLanguageFromText(text, language);
     const localeConfig =
       INDIAN_SPEECH_LOCALE_CONFIG[detectedLanguage] || INDIAN_SPEECH_LOCALE_CONFIG.en;
@@ -559,76 +681,45 @@ const speakWebSpeech = ({
         : window.speechSynthesis.getVoices();
     const chosenVoice = selectBestIndianVoice(voices, localeConfig);
 
-    // Split text into conversational sentence breath-groups so each phrase receives natural Indian pitch/rate inflection
-    const rawSegments = cleanText
-      .split(/(?<=[.!?।॥])\s+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const segments = rawSegments.length > 0 ? rawSegments : [cleanText];
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    currentUtterance = utterance;
 
-    let currentIdx = 0;
+    utterance.lang = chosenVoice?.lang || localeConfig.locale;
+    if (chosenVoice) {
+      utterance.voice = chosenVoice;
+    }
 
-    const speakNextSegment = () => {
-      if (currentIdx >= segments.length) {
-        currentUtterance = null;
-        onEnd?.();
+    const computedPitch = pitchOverride ?? localeConfig.pitch;
+    const computedRate = rateOverride ?? localeConfig.rate;
+
+    utterance.pitch = Number(computedPitch.toFixed(2));
+    utterance.rate = Number(computedRate.toFixed(2));
+    utterance.volume = localeConfig.volume;
+
+    utterance.onstart = () => {
+      if (requestId !== activeSpeechRequestId) {
+        window.speechSynthesis.cancel();
         return;
       }
-
-      const segment = segments[currentIdx];
-      const utterance = new SpeechSynthesisUtterance(segment);
-      currentUtterance = utterance;
-
-      utterance.lang = chosenVoice?.lang || localeConfig.locale;
-      if (chosenVoice) {
-        utterance.voice = chosenVoice;
-      }
-
-      // Dynamic Indian prosodic pitch & rate adjustments based on sentence intent (greeting, question, or guidance)
-      const isGreetingSegment =
-        currentIdx === 0 &&
-        /^(namaste|namaskar|ନମସ୍କାର|नमस्ते|নমস্কার|నమస్కారం|வணக்கம்|नमस्कार|નમસ્તે|ನಮಸ್ಕಾರ)/i.test(
-          segment
-        );
-      const isQuestionSegment = segment.endsWith("?");
-
-      let computedPitch = pitchOverride ?? localeConfig.pitch;
-      if (isGreetingSegment) {
-        computedPitch += localeConfig.greetingPitchBoost;
-      } else if (isQuestionSegment) {
-        computedPitch += localeConfig.questionPitchBoost;
-      }
-
-      const computedRate =
-        rateOverride ??
-        (isGreetingSegment ? Math.max(0.9, localeConfig.rate - 0.02) : localeConfig.rate);
-
-      utterance.pitch = Number(computedPitch.toFixed(2));
-      utterance.rate = Number(computedRate.toFixed(2));
-      utterance.volume = localeConfig.volume;
-
-      if (currentIdx === 0) {
-        utterance.onstart = () => {
-          onStart?.();
-        };
-      }
-
-      utterance.onend = () => {
-        currentIdx += 1;
-        speakNextSegment();
-      };
-
-      utterance.onerror = (event) => {
-        console.warn("Web Speech API notice:", event);
-        currentUtterance = null;
-        onError?.(event);
-        onEnd?.();
-      };
-
-      window.speechSynthesis.speak(utterance);
+      onStart?.();
     };
 
-    speakNextSegment();
+    utterance.onend = () => {
+      currentUtterance = null;
+      if (requestId === activeSpeechRequestId) {
+        onEnd?.();
+      }
+    };
+
+    utterance.onerror = (event) => {
+      currentUtterance = null;
+      if (requestId === activeSpeechRequestId) {
+        onError?.(event);
+        onEnd?.();
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
   } catch (err) {
     console.error("Speech Synthesis failure:", err);
     onError?.(err);
@@ -636,30 +727,53 @@ const speakWebSpeech = ({
   }
 };
 
+export const isCurrentlySpeaking = (): boolean => {
+  if (currentAudioElement && !currentAudioElement.paused) {
+    return true;
+  }
+  if (typeof window !== "undefined" && "speechSynthesis" in window && window.speechSynthesis.speaking) {
+    return true;
+  }
+  return false;
+};
+
 export const stopSpeech = () => {
+  activeSpeechRequestId += 1;
   if (currentAudioElement) {
     currentAudioElement.pause();
+    currentAudioElement.currentTime = 0;
     currentAudioElement = null;
   }
   if (currentObjectUrl) {
     URL.revokeObjectURL(currentObjectUrl);
     currentObjectUrl = null;
   }
-  if ("speechSynthesis" in window) {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }
   currentUtterance = null;
 };
 
-// Speech recognition helper
+export type VoiceInputCallback = (
+  text: string,
+  isFinal?: boolean,
+  details?: {
+    finalChunk: string;
+    interimChunk: string;
+    fullSessionTranscript: string;
+  }
+) => void;
+
+// Continuous Speech Recognition helper with instant Barge-In support
 export const listenToVoiceInput = (
   language: LanguageCode,
-  onResult: (text: string, isFinal?: boolean) => void,
+  onResult: VoiceInputCallback,
   onError?: (err: string) => void,
   onEnd?: () => void,
   onSpeechStart?: () => void
 ) => {
-  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const SpeechRecognition =
+    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
     onError?.("Voice speech recognition is not supported in this browser.");
@@ -667,36 +781,55 @@ export const listenToVoiceInput = (
   }
 
   const recognition = new SpeechRecognition();
-  recognition.continuous = false;
+  recognition.continuous = true;
   recognition.interimResults = true;
-  recognition.lang = LANGUAGE_VOICE_MAP[language] || "or-IN";
+  recognition.maxAlternatives = 1;
+  recognition.lang = LANGUAGE_VOICE_MAP[language] || "en-IN";
 
   recognition.onspeechstart = () => {
-    // Interruption: Pause/stop Arohi from speaking immediately as soon as user starts speaking
+    // Instant Barge-In: Pause/stop Arohi immediately as soon as user starts speaking
     stopSpeech();
     onSpeechStart?.();
   };
 
   recognition.onsoundstart = () => {
-    stopSpeech();
+    if (isCurrentlySpeaking()) {
+      stopSpeech();
+      onSpeechStart?.();
+    }
   };
 
   recognition.onresult = (event: any) => {
-    // Whenever user speech is detected, pause ongoing assistant speech
+    // Immediately interrupt Arohi if she is speaking when user words are recognized
     stopSpeech();
+    onSpeechStart?.();
 
-    let transcript = "";
-    let isFinal = false;
+    let interimChunk = "";
+    let finalChunk = "";
+    let fullSessionTranscript = "";
 
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        isFinal = true;
+    for (let i = 0; i < event.results.length; i++) {
+      const piece = event.results[i][0].transcript;
+      fullSessionTranscript += piece + (event.results[i].isFinal ? " " : "");
+      if (i >= event.resultIndex) {
+        if (event.results[i].isFinal) {
+          finalChunk += piece + " ";
+        } else {
+          interimChunk += piece;
+        }
       }
     }
 
-    if (transcript.trim()) {
-      onResult(transcript, isFinal);
+    const latestSegment = (finalChunk || interimChunk).trim();
+    const cleanedFull = fullSessionTranscript.replace(/\s+/g, " ").trim();
+    const hasFinal = Boolean(finalChunk.trim());
+
+    if (latestSegment || cleanedFull) {
+      onResult(latestSegment || cleanedFull, hasFinal, {
+        finalChunk: finalChunk.trim(),
+        interimChunk: interimChunk.trim(),
+        fullSessionTranscript: cleanedFull,
+      });
     }
   };
 

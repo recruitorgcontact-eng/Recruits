@@ -29,7 +29,14 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { LanguageCode, CareerMemory } from "../types";
-import { speakText, stopSpeech, listenToVoiceInput, playCallChime, isOdiaText } from "../utils/speech";
+import {
+  speakText,
+  stopSpeech,
+  listenToVoiceInput,
+  playCallChime,
+  detectIndianLanguageFromText,
+} from "../utils/speech";
+import { ArohiLiveAudioClient } from "../utils/liveAudioClient";
 
 interface ArohiFloatingAgentProps {
   memory?: CareerMemory;
@@ -70,16 +77,21 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [callStatus, setCallStatus] = useState<
-    "idle" | "listening" | "thinking" | "speaking"
+    "idle" | "connecting" | "listening" | "thinking" | "speaking"
   >("idle");
+  const [liveUserTranscript, setLiveUserTranscript] = useState("");
+  const [liveArohiSubtitle, setLiveArohiSubtitle] = useState("");
+  const [bargeInTriggered, setBargeInTriggered] = useState(false);
+  const [liveEngineLabel, setLiveEngineLabel] = useState("Aoede Live Audio");
 
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "msg-welcome-01",
       sender: "arohi",
-      text: "Namaste! 🙏 I'm Arohi, your personal Career Coach & Guide on Recruits.org.in (Quench Research Labs Private Limited • Powered by arohiai.com). Whether you're preparing for OPSC, UPSC, SSC & Banking exams or aiming for top MNC placements at Tata, Infosys, Wipro, HDFC Bank, or Reliance—I'm right here with you like a supportive elder sister and mentor! How can we start your preparation today?",
-      spokenSummary: "Namaste! I'm Arohi, your career guide on Recruits.org.in. Tell me, how can we start your career preparation today?",
+      text: "Namaste! 🙏 I'm Arohi, your personal Career Coach & Guide on Recruits.org.in (Quench Research Labs Private Limited • Powered by arohiai.com). Whether you're preparing for OPSC, UPSC, SSC & Banking exams or aiming for top MNC placements at Tata, Infosys, Wipro, HDFC Bank, or Reliance—I'm right here with you like a supportive elder sister and mentor! Speak or type in Odia, Hindi, or English—I'll answer in your language!",
+      spokenSummary:
+        "Namaste! I'm Arohi, your career guide on Recruits.org.in. Tell me, how can we start your career preparation today?",
       timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -95,22 +107,53 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
   ]);
 
   const speechRecognitionRef = useRef<any>(null);
+  const speechPauseTimerRef = useRef<any>(null);
+  const pendingTranscriptRef = useRef<string>("");
+  const isCallActiveRef = useRef<boolean>(false);
+  const isMutedRef = useRef<boolean>(false);
+  const loadingResponseRef = useRef<boolean>(false);
+  const languageRef = useRef<LanguageCode>("en");
+  const skipGreetingOnAutoDetectRef = useRef<boolean>(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const timerIntervalRef = useRef<any>(null);
+  const liveClientRef = useRef<ArohiLiveAudioClient | null>(null);
+  const liveInputBufferRef = useRef<string>("");
+  const liveOutputBufferRef = useRef<string>("");
 
-  // Language greeting updates across all Indian languages (zero age or artificial model mentions)
   useEffect(() => {
+    isCallActiveRef.current = isCallActive;
+  }, [isCallActive]);
+
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+
+  useEffect(() => {
+    loadingResponseRef.current = loadingResponse;
+  }, [loadingResponse]);
+
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
+
+  // Language greeting updates when user manually switches dropdown (skipped when auto-detected mid-conversation)
+  useEffect(() => {
+    if (skipGreetingOnAutoDetectRef.current) {
+      skipGreetingOnAutoDetectRef.current = false;
+      return;
+    }
+
     const languageGreetings: Record<
       string,
       { text: string; spokenSummary: string }
     > = {
       or: {
-        text: "ନମସ୍କାର! 🙏 ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ ନିଜର କ୍ୟାରିଅର୍ ଦିଦି ଓ ଗାଇଡ୍! ଓଡ଼ିଶାର OPSC, OSSC ତଥା ସମଗ୍ର ଭାରତର UPSC, SSC, ବ୍ୟାଙ୍କିଙ୍ଗ୍ ଏବଂ TCS, Infosys, Wipro ଭଳି ଟପ୍ କମ୍ପାନୀ ଚାକିରି ପାଇଁ ଆପଣଙ୍କୁ ସାହାଯ୍ୟ କରିବାକୁ ମୁଁ ସଦା ପ୍ରସ୍ତୁତ। ନିଶ୍ଚୟ ପଚାରନ୍ତୁ, ଆଜି ଆମେ କେଉଁଠୁ ଆରମ୍ଭ କରିବା?",
+        text: "ନମସ୍କାର! 🙏 ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ ନିଜର କ୍ୟାରିଅର୍ ଦିଦି ଓ ଗାଇଡ୍! ଓଡ଼ିଶାର ଓପିଏସସି, ଓଏସଏସସି ତଥା ସମଗ୍ର ଭାରତର ୟୁପିଏସସି, ଏସଏସସି, ବ୍ୟାଙ୍କିଙ୍ଗ୍ ଏବଂ ଟିସିଏସ୍, ଇନଫୋସିସ୍, ୱିପ୍ରୋ ଭଳି ଟପ୍ କମ୍ପାନୀ ଚାକିରି ପାଇଁ ଆପଣଙ୍କୁ ସାହାଯ୍ୟ କରିବାକୁ ମୁଁ ସଦା ପ୍ରସ୍ତୁତ। ନିଶ୍ଚୟ ପଚାରନ୍ତୁ, ଆଜି ଆମେ କେଉଁଠୁ ଆରମ୍ଭ କରିବା?",
         spokenSummary:
           "ନମସ୍କାର! ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ ନିଜର କ୍ୟାରିଅର୍ ଗାଇଡ୍। କୁହନ୍ତୁ, ଆଜି ଆମେ କେଉଁ ବିଷୟରେ କଥା ହେବା?",
       },
       hi: {
-        text: "नमस्ते जी! 🙏 मैं आरोही हूँ, आपकी अपनी करियर कोच और गाइड! चाहे UPSC, SSC, बैंकिंग जैसी सरकारी परीक्षा की तैयारी हो या TCS, Infosys, Wipro, HDFC Bank जैसी टॉप कंपनियों में प्लेसमेंट—आपकी मेहनत ज़रूर रंग लाएगी। बताइए, आज हम किस लक्ष्य से शुरुआत करें?",
+        text: "नमस्ते जी! 🙏 मैं आरोही हूँ, आपकी अपनी करियर कोच और गाइड! चाहे यूपीएससी, एसएससी, बैंकिंग जैसी सरकारी परीक्षा की तैयारी हो या टीसीएस, इन्फोसिस, विप्रो, एचडीएफसी बैंक जैसी टॉप कंपनियों में प्लेसमेंट—आपकी मेहनत ज़रूर रंग लाएगी। बताइए, आज हम किस लक्ष्य से शुरुआत करें?",
         spokenSummary:
           "नमस्ते जी! मैं आरोही हूँ, आपकी अपनी करियर गाइड। बताइए, आज मैं आपकी क्या मदद कर सकती हूँ?",
       },
@@ -119,7 +162,7 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
         spokenSummary: "নমস্কার! আমি আরোহী, আপনার ক্যারিয়ার গাইড। আজ আপনাকে কীভাবে সাহায্য করতে পারি?",
       },
       te: {
-        text: "నమస్కారం! 🙏 నేను ఆరోహిని, మీ కెరీర్ గైడ్ మరియు మెంటార్! ప్రభుత్వ ఉద్యోగాలైనా లేదా TCS, Infosys, Wipro వంటి టాప్ కంపెనీల ప్లేస్‌మెంట్స్ అయినా—నేను మీకు తోడుగా ఉంటాను. ఈరోజు మనం ఏ అంశంతో শুরু చేద్దాం?",
+        text: "నమస్కారం! 🙏 నేను ఆరోహిని, మీ కెరీర్ గైడ్ మరియు మెంటార్! ప్రభుత్వ ఉద్యోగాలైనా లేదా TCS, Infosys, Wipro వంటి టాప్ కంపెనీల ప్లేస్‌మెంట్స్ అయినా—నేను మీకు తోడుగా ఉంటాను. ఈరోజు మనం ఏ అంశంతో ప్రారంభిద్దాం?",
         spokenSummary: "నమస్కారం! నేను ఆరోహిని, మీ కెరీర్ గైడ్. ఈరోజు నేను మీకు ఎలా సహాయం చేయగలను?",
       },
       ta: {
@@ -136,7 +179,7 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
       },
       kn: {
         text: "ನಮಸ್ಕಾರ! 🙏 ನಾನು ಆರೋಹಿ, ನಿಮ್ಮ ವೃತ್ತಿ ಮಾರ್ಗದರ್ಶಕಿ! ಸರ್ಕಾರಿ ಪರೀಕ್ಷೆಗಳಾಗಲಿ ಅಥವಾ TCS, Infosys, Wipro ದಂತಹ ಉನ್ನತ ಕಂಪನಿಗಳ ಉದ್ಯೋಗವಾಗಲಿ—ನಾನು ಸದಾ ನಿಮ್ಮೊಂದಿಗಿದ್ದೇನೆ. ಹೇಳಿ, ಇಂದು ನಾವು ಯಾವುದರಿಂದ ಪ್ರಾರಂಭಿಸೋಣ?",
-        spokenSummary: "ನಮಸ್ಕಾರ! ನಾನು ಆರೋಹಿ, ನಿಮ್ಮ ವೃತ್ತಿ ಮಾರ್ಗದರ್ಶಕಿ. ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ സഹಾಯ ಮಾಡಲಿ?",
+        spokenSummary: "ನಮಸ್ಕಾರ! ನಾನು ಆರೋಹಿ, ನಿಮ್ಮ ವೃತ್ತಿ ಮಾರ್ಗದರ್ಶಕಿ. ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
       },
     };
 
@@ -173,6 +216,8 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
       clearInterval(timerIntervalRef.current);
       setCallDuration(0);
       setCallStatus("idle");
+      setLiveUserTranscript("");
+      setBargeInTriggered(false);
     }
     return () => clearInterval(timerIntervalRef.current);
   }, [isCallActive]);
@@ -200,20 +245,52 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
       .padStart(2, "0")}`;
   };
 
-  // Send Message / Process Speech
-  const handleSendMessage = async (customMessage?: string) => {
-    const textToSend = customMessage || inputText;
-    if (!textToSend.trim() || loadingResponse) return;
+  // Clean up Live audio client on unmount
+  useEffect(() => {
+    return () => {
+      liveClientRef.current?.stop();
+    };
+  }, []);
 
-    // Immediately stop any ongoing Arohi speech when user sends a new message
+  // Manual or automatic Barge-In handler: immediately pauses Arohi speech & listens to user
+  const handleBargeInInterrupt = () => {
     stopSpeech();
+    if (liveClientRef.current?.isActive()) {
+      liveClientRef.current.interruptPlayback();
+      setBargeInTriggered(true);
+      setCallStatus("listening");
+      return;
+    }
+    setBargeInTriggered(true);
+    setCallStatus("listening");
+    startLiveListening();
+  };
 
-    // Auto-detect Odia language in user input
-    const textIsOdia = isOdiaText(textToSend);
-    const activeLang: LanguageCode = textIsOdia ? "or" : language;
+  // Send Message / Process Speech (auto-detects user's language and answers in that exact language)
+  const handleSendMessage = async (customMessage?: string) => {
+    const textToSend = (customMessage ?? inputText).trim();
+    if (!textToSend || loadingResponseRef.current) return;
 
-    if (textIsOdia && language !== "or") {
-      setLanguage("or");
+    // Immediately pause/stop any ongoing Arohi speech when user speaks or sends a message
+    stopSpeech();
+    if (speechPauseTimerRef.current) {
+      clearTimeout(speechPauseTimerRef.current);
+      speechPauseTimerRef.current = null;
+    }
+    pendingTranscriptRef.current = "";
+    setLiveUserTranscript("");
+    setBargeInTriggered(false);
+
+    // Auto-detect user's language (Odia, Hindi, English, Bengali, Telugu, Tamil, Marathi, Gujarati, Kannada)
+    const detectedUserLang = detectIndianLanguageFromText(
+      textToSend,
+      languageRef.current
+    );
+
+    if (detectedUserLang !== languageRef.current) {
+      skipGreetingOnAutoDetectRef.current = true;
+      languageRef.current = detectedUserLang;
+      setLanguage(detectedUserLang);
     }
 
     const userMsg: ChatMessage = {
@@ -229,7 +306,8 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
     setMessages((prev) => [...prev, userMsg]);
     if (!customMessage) setInputText("");
     setLoadingResponse(true);
-    if (isCallActive) setCallStatus("thinking");
+    loadingResponseRef.current = true;
+    if (isCallActiveRef.current) setCallStatus("thinking");
 
     try {
       const res = await fetch("/api/ai/arohi-agent-chat", {
@@ -237,8 +315,8 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userMessage: textToSend,
-          mode: isCallActive ? "voice" : "chat",
-          language: activeLang,
+          mode: isCallActiveRef.current ? "voice" : "chat",
+          language: detectedUserLang,
           conversationHistory: messages.slice(-6).map((m) => ({
             role: m.sender === "user" ? "user" : "model",
             text: m.text,
@@ -249,16 +327,27 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
 
       if (res.ok) {
         const data = await res.json();
-        const responseIsOdia = isOdiaText(data.shortSpokenSummary || data.responseText);
-        const replyLang: LanguageCode = responseIsOdia ? "or" : activeLang;
+        const serverDetectedLang = (data.detectedLanguage ||
+          detectIndianLanguageFromText(
+            data.shortSpokenSummary || data.responseText,
+            detectedUserLang
+          )) as LanguageCode;
+
+        if (serverDetectedLang && serverDetectedLang !== languageRef.current) {
+          skipGreetingOnAutoDetectRef.current = true;
+          languageRef.current = serverDetectedLang;
+          setLanguage(serverDetectedLang);
+        }
 
         const arohiMsg: ChatMessage = {
           id: "arohi-" + Date.now(),
           sender: "arohi",
           text:
             data.responseText ||
-            (replyLang === "or"
-              ? "ମୁଁ ଆପଣଙ୍କ ସହିତ ଅଛି! ଆସନ୍ତୁ ଆମେ ଆଗକୁ ବଢ଼ିବା।"
+            (serverDetectedLang === "or"
+              ? "ହଁ ନିଶ୍ଚୟ, ମୁଁ ଆପଣଙ୍କ ସାଙ୍ଗରେ ଅଛି! ଆସନ୍ତୁ ଆମେ ଆଗକୁ ବଢ଼ିବା।"
+              : serverDetectedLang === "hi"
+              ? "हाँ बिल्कुल जी, मैं आपके साथ हूँ! आइए आगे बढ़ते हैं।"
               : "I'm right here with you! Let's keep moving forward with confidence."),
           spokenSummary: data.shortSpokenSummary || data.responseText,
           timestamp: new Date().toLocaleTimeString([], {
@@ -269,16 +358,18 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
 
         setMessages((prev) => [...prev, arohiMsg]);
 
-        // Speak back if in call mode or if speaker is unmuted
-        if (isCallActive && !isSpeakerMuted) {
+        // Speak back in the user's language while keeping Barge-In listening active!
+        if (isCallActiveRef.current && !isSpeakerMuted) {
           setCallStatus("speaking");
+          // Ensure microphone listener stays active while Arohi speaks so user can barge-in anytime
+          startLiveListening(serverDetectedLang);
           speakText({
             text: data.shortSpokenSummary || data.responseText,
-            language: replyLang,
+            language: serverDetectedLang,
             onEnd: () => {
-              if (isCallActive) {
+              if (isCallActiveRef.current) {
                 setCallStatus("listening");
-                startLiveListening();
+                startLiveListening(serverDetectedLang);
               }
             },
           });
@@ -288,7 +379,8 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
       console.error("Error talking with Arohi AI:", err);
     } finally {
       setLoadingResponse(false);
-      if (isCallActive && callStatus === "thinking") {
+      loadingResponseRef.current = false;
+      if (isCallActiveRef.current && callStatus === "thinking") {
         setCallStatus("listening");
       }
     }
@@ -344,15 +436,16 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
 
         setMessages((prev) => [...prev, arohiDigestMsg]);
 
-        if (isCallActive && !isSpeakerMuted) {
+        if (isCallActiveRef.current && !isSpeakerMuted) {
           setCallStatus("speaking");
+          startLiveListening(language);
           speakText({
             text: data.spokenSummary || data.greeting,
             language,
             onEnd: () => {
-              if (isCallActive) {
+              if (isCallActiveRef.current) {
                 setCallStatus("listening");
-                startLiveListening();
+                startLiveListening(language);
               }
             },
           });
@@ -365,78 +458,235 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
     }
   };
 
-  // Start Live Voice Call
-  const handleStartVoiceCall = () => {
+  // Start Live Voice Call: Gemini Live WebSocket (Aoede) first, automatic Zephyr turn-based fallback
+  const handleStartVoiceCall = async () => {
     playCallChime("ring");
     setIsCallActive(true);
+    isCallActiveRef.current = true;
     setActiveTab("call");
+    setCallStatus("connecting");
+    setBargeInTriggered(false);
+    setLiveUserTranscript("");
+    setLiveArohiSubtitle("");
+    liveInputBufferRef.current = "";
+    liveOutputBufferRef.current = "";
+    setLiveEngineLabel("Connecting Live Audio (Aoede)...");
+
+    const commitBufferedTranscripts = () => {
+      const userChunk = liveInputBufferRef.current.trim();
+      const arohiChunk = liveOutputBufferRef.current.trim();
+      const nowTime = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      if (userChunk) {
+        liveInputBufferRef.current = "";
+        setMessages((prev) => [
+          ...prev,
+          { id: `live-u-${Date.now()}`, sender: "user", text: userChunk, timestamp: nowTime },
+        ]);
+      }
+      if (arohiChunk) {
+        liveOutputBufferRef.current = "";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `live-a-${Date.now() + 1}`,
+            sender: "arohi",
+            text: arohiChunk,
+            spokenSummary: arohiChunk,
+            timestamp: nowTime,
+          },
+        ]);
+      }
+    };
+
+    const liveClient = new ArohiLiveAudioClient();
+    liveClientRef.current = liveClient;
+
+    const liveConnected = await liveClient.start({
+      language: languageRef.current,
+      memory,
+      callbacks: {
+        onModelInfo: (info) => {
+          playCallChime("connect");
+          setLiveEngineLabel(`Live Voice (${info.voice})`);
+        },
+        onStatusChange: (status) => {
+          if (!isCallActiveRef.current) return;
+          if (status === "speaking") setCallStatus("speaking");
+          else if (status === "connecting") setCallStatus("connecting");
+          else if (status === "thinking") setCallStatus("thinking");
+          else if (status === "listening") setCallStatus("listening");
+        },
+        onInputTranscript: (chunk) => {
+          liveInputBufferRef.current = `${liveInputBufferRef.current} ${chunk}`.replace(/\s+/g, " ").trim();
+          setLiveUserTranscript(liveInputBufferRef.current);
+          const detected = detectIndianLanguageFromText(liveInputBufferRef.current, languageRef.current);
+          if (detected !== languageRef.current) {
+            skipGreetingOnAutoDetectRef.current = true;
+            languageRef.current = detected;
+            setLanguage(detected);
+          }
+        },
+        onOutputTranscript: (chunk) => {
+          if (liveInputBufferRef.current.trim()) {
+            const u = liveInputBufferRef.current.trim();
+            liveInputBufferRef.current = "";
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `live-u-${Date.now()}`,
+                sender: "user",
+                text: u,
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              },
+            ]);
+          }
+          liveOutputBufferRef.current = `${liveOutputBufferRef.current} ${chunk}`.replace(/\s+/g, " ").trim();
+          setLiveArohiSubtitle(liveOutputBufferRef.current);
+        },
+        onInterrupted: () => {
+          setBargeInTriggered(true);
+          commitBufferedTranscripts();
+        },
+        onTurnComplete: () => {
+          commitBufferedTranscripts();
+          setBargeInTriggered(false);
+        },
+        onError: () => {
+          // Handled cleanly if connection drops or quota fallback triggers
+        },
+      },
+    });
+
+    if (liveConnected && isCallActiveRef.current) {
+      liveClient.setMicMuted(isMutedRef.current);
+      liveClient.setSpeakerMuted(isSpeakerMuted);
+      return;
+    }
+
+    // Fallback to turn-based Zephyr Neural TTS + Continuous STT if Live WS is unavailable
+    liveClientRef.current = null;
+    if (!isCallActiveRef.current) return;
+
+    setLiveEngineLabel("Zephyr HD Voice (Fallback)");
+    playCallChime("connect");
     setCallStatus("speaking");
 
-    setTimeout(() => {
-      playCallChime("connect");
-      // Welcome Call Greeting Speech across Indian languages
-      const welcomeByLang: Record<string, string> = {
-        or: "ନମସ୍କାର! ମୁଁ ଆରୋହୀ, ଆପଣଙ୍କ କ୍ୟାରିଅର୍ ଗାଇଡ୍। ଆପଣଙ୍କ ସହ କଥା ହୋଇ ବହୁତ ଖୁସି ଲାଗିଲା! କୁହନ୍ତୁ, ଆଜି ଆପଣଙ୍କ କ୍ୟାରିଅର୍ ପାଇଁ ମୁଁ କିପରି ସାହାଯ୍ୟ କରିପାରିବି?",
-        hi: "नमस्ते जी! मैं आरोही हूँ, आपकी अपनी करियर गाइड। आपसे बात करके बहुत खुशी हुई! बताइए, आज हम आपकी तैयारी में कैसे आगे बढ़ें?",
-        bn: "নমস্কার! আমি আরোহী, আপনার ক্যারিয়ার গাইড। আপনার সাথে কথা বলে খুব ভালো লাগছে! বলুন, আজ কীভাবে সাহায্য করতে পারি?",
-        te: "నమస్కారం! నేను ఆరోహిని, మీ కెరీర్ గైడ్. మీతో మాట్లాడటం చాలా సంతోషంగా ఉంది! ఈరోజు నేను మీకు ఎలా సహాయం చేయగలను?",
-        ta: "வணக்கம்! நான் ஆரோஹி, உங்கள் தொழில் வழிகாட்டி. உங்களுடன் பேசுவதில் மிக்க மகிழ்ச்சி! இன்று நான் உங்களுக்கு எப்படி உதவலாம்?",
-        mr: "नमस्कार! मी आरोही, तुमची करिअर गाईड. तुमच्याशी बोलून खूप आनंद झाला! सांगा, आज मी तुम्हाला कशी मदत करू शकते?",
-        gu: "નમસ્તે! હું આરોહી છું, તમારી કારકિર્દી ગાઈડ. તમારી સાથે વાત કરીને ખૂબ આનંદ થયો! આજે હું તમને કેવી રીતે મદદ કરી શકું?",
-        kn: "ನಮಸ್ಕಾರ! ನಾನು ಆರೋಹಿ, ನಿಮ್ಮ ವೃತ್ತಿ ಮಾರ್ಗದರ್ಶಕಿ. ನಿಮ್ಮೊಂದಿಗೆ ಮಾತನಾಡಲು ತುಂಬಾ ಸಂತೋಷವಾಗಿದೆ! ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
-        en: "Namaste! I'm Arohi, your personal career guide on Recruits.org.in. It is so wonderful speaking with you! Tell me, how can I help with your exams or job placements today?",
-      };
-      const welcomeGreeting = welcomeByLang[language] || welcomeByLang.en;
+    const welcomeByLang: Record<string, string> = {
+      or: "ନମସ୍କାର! ମୁଁ ଆରୋହୀ, recruits.org.in ରେ ଆପଣଙ୍କ AI କ୍ୟାରିୟର ଓ ପ୍ଲେସମେଣ୍ଟ କୋଚ୍ — କୁହନ୍ତୁ, ଆପଣ କେଉଁ ସ୍କିଲ୍, ଇଣ୍ଟର୍ନଶିପ୍ କିମ୍ବା ଚାକିରି ପାଇଁ ପ୍ରସ୍ତୁତି କରୁଛନ୍ତି?",
+      hi: "नमस्ते! मैं आरोही हूँ, recruits.org.in पर आपकी AI करियर और प्लेसमेंट कोच — बताइए आप किस जॉब, इंटर्नशिप या स्किल की तैयारी कर रहे हैं?",
+      bn: "নমস্কার! আমি আরোহী, recruits.org.in-এ আপনার AI ক্যারিয়ার ও প্লেসমেন্ট কোচ — বলুন, আপনি কোন স্কিল, ইন্টার্নশিপ বা চাকরির জন্য প্রস্তুতি নিচ্ছেন?",
+      en: "Hello! I am Arohi, your AI career and placement coach on recruits.org.in — tell me what role, skill, internship, or job you are aiming for, and let's build your plan together!",
+    };
+    const currentLang = languageRef.current;
+    const welcomeGreeting = welcomeByLang[currentLang] || welcomeByLang.en;
 
-      speakText({
-        text: welcomeGreeting,
-        language,
-        onEnd: () => {
+    startLiveListening(currentLang);
+    speakText({
+      text: welcomeGreeting,
+      language: currentLang,
+      onEnd: () => {
+        if (isCallActiveRef.current) {
           setCallStatus("listening");
-          startLiveListening();
-        },
-      });
-    }, 400);
+          startLiveListening(languageRef.current);
+        }
+      },
+    });
   };
 
   // End Voice Call
   const handleEndCall = () => {
     playCallChime("disconnect");
     stopSpeech();
+    if (liveClientRef.current) {
+      liveClientRef.current.stop();
+      liveClientRef.current = null;
+    }
+    if (speechPauseTimerRef.current) {
+      clearTimeout(speechPauseTimerRef.current);
+      speechPauseTimerRef.current = null;
+    }
+    pendingTranscriptRef.current = "";
+    liveInputBufferRef.current = "";
+    liveOutputBufferRef.current = "";
+    setLiveUserTranscript("");
+    setLiveArohiSubtitle("");
+    setBargeInTriggered(false);
+    isCallActiveRef.current = false;
     if (speechRecognitionRef.current) {
-      speechRecognitionRef.current.stop();
+      try {
+        speechRecognitionRef.current.onend = null;
+        speechRecognitionRef.current.stop();
+      } catch (_e) {
+        // Ignore stop notice
+      }
+      speechRecognitionRef.current = null;
     }
     setIsCallActive(false);
     setCallStatus("idle");
   };
 
-  // Start Voice Input Recognition
-  const startLiveListening = () => {
-    if (isMuted) return;
+  // Start Continuous Voice Input Recognition with Barge-In & Pause-Debounce
+  const startLiveListening = (overrideLang?: LanguageCode) => {
+    if (isMutedRef.current || !isCallActiveRef.current) return;
+
+    // Avoid creating duplicate recognition instances if one is already running
+    if (speechRecognitionRef.current) {
+      return;
+    }
+
+    const listenLang = overrideLang || languageRef.current;
 
     speechRecognitionRef.current = listenToVoiceInput(
-      language,
+      listenLang,
       (transcript, isFinal) => {
-        // Interruption: Pause/stop Arohi speech as soon as user speaks
+        if (!isCallActiveRef.current || isMutedRef.current) return;
+
+        // Instant Barge-In: Pause Arohi immediately when user speaks
         stopSpeech();
-        if (transcript.trim() && (isFinal || transcript.length > 20)) {
-          handleSendMessage(transcript);
+        setCallStatus("listening");
+        setBargeInTriggered(true);
+
+        const cleanTranscript = transcript.trim();
+        if (!cleanTranscript) return;
+
+        pendingTranscriptRef.current = cleanTranscript;
+        setLiveUserTranscript(cleanTranscript);
+
+        // Reset pause debounce timer so user can finish their full sentence without mid-sentence cutoff
+        if (speechPauseTimerRef.current) {
+          clearTimeout(speechPauseTimerRef.current);
         }
+
+        const waitMs = isFinal ? 650 : 1150;
+        speechPauseTimerRef.current = setTimeout(() => {
+          const finalToSend = pendingTranscriptRef.current.trim();
+          if (finalToSend && isCallActiveRef.current && !loadingResponseRef.current) {
+            pendingTranscriptRef.current = "";
+            handleSendMessage(finalToSend);
+          }
+        }, waitMs);
       },
-      (err) => {
-        console.warn("Speech recognition notice:", err);
-        if (isCallActive && callStatus !== "thinking") {
-          setCallStatus("idle");
+      (_err) => {
+        speechRecognitionRef.current = null;
+      },
+      () => {
+        speechRecognitionRef.current = null;
+        // Automatically keep listening alive throughout the call
+        if (isCallActiveRef.current && !isMutedRef.current) {
+          setTimeout(() => {
+            if (isCallActiveRef.current && !isMutedRef.current && !speechRecognitionRef.current) {
+              startLiveListening(languageRef.current);
+            }
+          }, 250);
         }
       },
       () => {
-        if (isCallActive && callStatus === "listening") {
-          // Can restart listening loop if needed
-        }
-      },
-      () => {
-        // onSpeechStart: pause speaking instantly
+        // onSpeechStart: Barge-In — pause Arohi speaking the instant user starts talking
         stopSpeech();
+        setBargeInTriggered(true);
         setCallStatus("listening");
       }
     );
@@ -444,64 +694,64 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
 
   // Play Spoken Audio manually
   const handleManualSpeak = (text: string) => {
+    const detected = detectIndianLanguageFromText(text, language);
     speakText({
       text,
-      language,
+      language: detected,
     });
   };
 
   return (
     <div className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 max-w-[calc(100vw-1.5rem)]">
-      {/* FLOATING TRIGGER BUTTON WITH ASK ME TAG */}
+      {/* FLOATING TRIGGER BUTTON WITH HOVER-ONLY GLASS TOOLTIP (NEVER OBSTRUCTS LECTURE TEXT) */}
       {!isOpen && (
-        <div className="flex items-center gap-2 sm:gap-3 group">
-          {/* Ask Me Floating Badge */}
+        <div className="flex items-center gap-2.5 group">
+          {/* Ask Arohi Floating Glass Pill — reveals smoothly on hover */}
           <div
-            className="bg-slate-900 border border-emerald-500/80 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl shadow-2xl flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold animate-bounce cursor-pointer"
+            className="glass-vision text-white px-3.5 py-2 rounded-full flex items-center gap-2 text-[11px] font-bold cursor-pointer opacity-0 translate-x-2 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-200"
             onClick={() => setIsOpen(true)}
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-amber-300 font-extrabold">Ask Me!</span>
-            <span className="text-slate-300 hidden sm:inline">Talk with Arohi AI Coach</span>
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-amber-300 font-extrabold">Ask Arohi</span>
+            <span className="text-slate-200 hidden sm:inline">Voice &amp; Chat Coach</span>
+            <Sparkles className="w-3.5 h-3.5 text-sky-300" />
           </div>
 
-          {/* Trigger Circular Avatar Button */}
+          {/* Apple Intelligence Aurora Ring Trigger Orb */}
           <button
             id="btn-arohi-floating-trigger"
             onClick={() => setIsOpen(true)}
-            className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-tr from-emerald-600 via-teal-600 to-indigo-600 rounded-full p-0.5 shadow-2xl hover:scale-105 transition duration-300 relative group cursor-pointer shrink-0"
+            className="aurora-ring w-12 h-12 sm:w-14 sm:h-14 rounded-full p-0.5 shadow-2xl hover:scale-105 transition duration-300 relative cursor-pointer shrink-0"
             title="Arohi Career AI - Voice Call & Chat Assistant"
           >
-            <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center relative overflow-hidden">
-              {/* Smiling Female Avatar Graphic */}
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-rose-400 via-amber-300 to-emerald-400 flex items-center justify-center text-slate-900 font-extrabold text-base sm:text-lg shadow-inner">
+            <div className="w-full h-full bg-slate-950/95 backdrop-blur-xl rounded-full flex items-center justify-center relative overflow-hidden">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-sky-400 via-indigo-500 to-fuchsia-500 flex items-center justify-center text-white font-extrabold text-sm sm:text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
                 👩‍💼
               </div>
-              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-emerald-500 border-2 border-slate-900 rounded-full" />
+              <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-950 rounded-full" />
             </div>
           </button>
         </div>
       )}
 
-      {/* EXPANDED FLOATING AGENT DRAWER / MODAL */}
+      {/* EXPANDED FROSTED LIQUID GLASS AGENT DRAWER */}
       {isOpen && (
-        <div className="w-[calc(100vw-1.5rem)] sm:w-[420px] max-w-[420px] h-[82vh] max-h-[600px] sm:h-[580px] bg-white border border-slate-200 rounded-3xl text-slate-900 shadow-2xl flex flex-col overflow-hidden relative animate-in fade-in slide-in-from-bottom-8 duration-300">
+        <div className="w-[calc(100vw-1.5rem)] sm:w-[420px] max-w-[420px] h-[82vh] max-h-[610px] sm:h-[590px] bg-white/82 backdrop-blur-3xl border border-white/85 rounded-[2rem] text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_32px_70px_-18px_rgba(15,23,42,0.34)] flex flex-col overflow-hidden relative animate-in fade-in slide-in-from-bottom-8 duration-300">
           {/* HEADER */}
-          <div className="bg-slate-50 border-b border-slate-200 p-3 sm:p-4 flex items-center justify-between shrink-0">
+          <div className="bg-white/60 backdrop-blur-2xl border-b border-slate-900/8 p-3.5 sm:p-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="relative">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-rose-400 via-amber-300 to-emerald-400 flex items-center justify-center text-slate-900 text-sm sm:text-base font-bold shadow-md">
+              <div className="relative aurora-ring rounded-full p-0.5">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 flex items-center justify-center text-white text-sm sm:text-base font-bold">
                   👩‍💼
                 </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 border-2 border-white rounded-full animate-pulse" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full" />
               </div>
 
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">Arohi AI</h3>
-                  <span className="text-[9px] sm:text-[10px] bg-indigo-100 text-indigo-800 border border-indigo-300 px-1.5 sm:px-2 py-0.5 rounded-full font-bold">
-                    Indian Career Coach
+                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-950 tracking-tight">Arohi AI</h3>
+                  <span className="text-[9px] sm:text-[10px] bg-indigo-500/12 text-indigo-700 border border-indigo-300/60 px-2 py-0.5 rounded-full font-bold">
+                    Career Coach
                   </span>
                 </div>
                 <p className="text-[9px] sm:text-[10px] text-slate-500">
@@ -521,7 +771,7 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg bg-slate-200/80 transition"
+                className="p-1.5 text-slate-500 hover:text-slate-900 rounded-full bg-white/80 hover:bg-white border border-slate-200/80 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -529,16 +779,16 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
           </div>
 
           {/* SECONDARY CONTROL BAR: LANGUAGES & TABS */}
-          <div className="bg-slate-50 border-b border-slate-200 px-3 sm:px-4 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 shrink-0">
+          <div className="bg-white/50 backdrop-blur-xl border-b border-slate-900/8 px-3 sm:px-4 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 shrink-0">
             {/* Call / Chat Tabs & Daily Digest */}
             <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-              <div className="flex bg-slate-200/80 p-0.5 sm:p-1 rounded-xl border border-slate-300">
+              <div className="flex bg-slate-900/6 p-0.5 sm:p-1 rounded-full border border-white/80">
                 <button
                   onClick={() => setActiveTab("chat")}
-                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition flex items-center gap-1 ${
+                  className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                     activeTab === "chat"
-                      ? "bg-emerald-600 text-white shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "btn-apple-primary text-white"
+                      : "text-slate-600 hover:text-slate-950"
                   }`}
                 >
                   <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Chat
@@ -549,10 +799,10 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
                     setActiveTab("call");
                     if (!isCallActive) handleStartVoiceCall();
                   }}
-                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition flex items-center gap-1 ${
+                  className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                     activeTab === "call"
-                      ? "bg-emerald-600 text-white shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "btn-apple-primary text-white"
+                      : "text-slate-600 hover:text-slate-950"
                   }`}
                 >
                   <Phone className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Voice Call
@@ -574,7 +824,18 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
               <Globe className="w-3 h-3 text-emerald-600 shrink-0" />
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+                onChange={(e) => {
+                  const newLang = e.target.value as LanguageCode;
+                  languageRef.current = newLang;
+                  setLanguage(newLang);
+                  if (speechRecognitionRef.current) {
+                    try {
+                      speechRecognitionRef.current.stop();
+                    } catch (_err) {
+                      // Restart with new language via onend
+                    }
+                  }
+                }}
                 className="bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer"
                 title="Select Indian Voice & Chat Language"
               >
@@ -595,43 +856,83 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* VOICE CALL TAB VIEW */}
             {activeTab === "call" && (
-              <div className="h-full flex flex-col justify-between items-center py-4 text-center space-y-6">
+              <div className="h-full flex flex-col justify-between items-center py-2 text-center space-y-4">
                 <div className="space-y-2">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 p-1 mx-auto shadow-2xl relative">
-                    <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center text-4xl">
+                  <div className="aurora-ring w-22 h-22 rounded-full p-1 mx-auto shadow-2xl relative">
+                    <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center text-3xl">
                       👩‍💼
                     </div>
                     {isCallActive && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white"></span>
                       </span>
                     )}
                   </div>
 
-                  <h4 className="text-base font-bold text-slate-900">Arohi AI Voice Call</h4>
+                  <h4 className="text-base font-extrabold tracking-tight text-slate-950">Arohi AI Voice Call</h4>
                   <p className="text-xs text-slate-600 font-medium">
                     {isCallActive
-                      ? callStatus === "speaking"
-                        ? "Arohi is speaking..."
+                      ? callStatus === "connecting"
+                        ? "Connecting live Gemini voice channel..."
+                        : callStatus === "speaking"
+                        ? "Arohi is speaking (Speak anytime to interrupt)..."
                         : callStatus === "listening"
-                        ? "Listening to you live..."
+                        ? bargeInTriggered
+                          ? "Paused for you — Listening to your question..."
+                          : "Listening live across all Indian languages..."
                         : callStatus === "thinking"
-                        ? "Crafting advice..."
+                        ? "Understanding & replying in your language..."
                         : "Call Active"
-                      : "Ready to start friendly voice conversation"}
+                      : "Real-time bidirectional voice across all Indian languages"}
                   </p>
 
                   {isCallActive && (
-                    <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-300 px-3 py-1 rounded-full text-xs font-mono font-bold">
-                      <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-600" />
-                      <span>{formatTimer(callDuration)}</span>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-300 px-3 py-1 rounded-full text-xs font-mono font-bold">
+                        <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-600" />
+                        <span>{formatTimer(callDuration)}</span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                        {liveEngineLabel}
+                      </span>
                     </div>
                   )}
                 </div>
 
+                {/* LIVE RECOGNIZED SPEECH PREVIEW, SUBTITLE OR BARGE-IN INTERRUPT BUTTON */}
+                {isCallActive && (
+                  <div className="w-full px-3 space-y-2">
+                    {liveArohiSubtitle && (
+                      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl px-3 py-2 text-xs text-indigo-950 font-medium text-left">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block mb-0.5">
+                          Arohi Spoken Caption:
+                        </span>
+                        {liveArohiSubtitle}
+                      </div>
+                    )}
+                    {liveUserTranscript ? (
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-3 py-2 text-xs text-emerald-900 font-medium shadow-inner">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-0.5">
+                          Hearing You Live:
+                        </span>
+                        "{liveUserTranscript}"
+                      </div>
+                    ) : callStatus === "speaking" ? (
+                      <button
+                        type="button"
+                        onClick={handleBargeInInterrupt}
+                        className="w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                      >
+                        <Mic className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
+                        Interrupt Arohi &amp; Speak Now
+                      </button>
+                    ) : null}
+                  </div>
+                )}
+
                 {/* ANIMATED SOUND WAVE VISUALIZER */}
-                <div className="flex items-center justify-center gap-1.5 h-14 w-full px-8">
+                <div className="flex items-center justify-center gap-1.5 h-12 w-full px-8">
                   {waveHeights.map((h, idx) => (
                     <div
                       key={idx}
@@ -641,37 +942,80 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
                   ))}
                 </div>
 
-                {/* QUICK VOICE TOPIC SUGGESTION CHIPS */}
+                {/* QUICK MULTILINGUAL VOICE TOPIC SUGGESTION CHIPS */}
                 <div className="w-full space-y-1.5 px-2">
                   <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">
-                    Quick Voice Topics
+                    Tap or Speak in Odia, Hindi, or English
                   </span>
                   <div className="flex flex-wrap items-center justify-center gap-1.5">
                     {[
-                      "OPSC & Govt Jobs Strategy",
-                      "Fix my Resume ATS Score",
-                      "30s Tech Quick Quiz",
-                      "Salary CTC Negotiation",
+                      {
+                        label: "ଓଡ଼ିଆରେ କଥା ହୁଅନ୍ତୁ (Odia)",
+                        prompt: "ନମସ୍କାର ଆରୋହୀ ଦିଦି, ମୋତେ ଓଡ଼ିଶା ସରକାରୀ ଏବଂ କମ୍ପାନୀ ଚାକିରି ବିଷୟରେ ଓଡ଼ିଆରେ କୁହନ୍ତୁ।",
+                      },
+                      {
+                        label: "हिंदी में बात करें (Hindi)",
+                        prompt: "नमस्ते आरोही जी, मुझे सरकारी नौकरी और प्राइवेट प्लेसमेंट की तैयारी के बारे में हिंदी में बताइए।",
+                      },
+                      {
+                        label: "Fix Resume ATS",
+                        prompt: "How can I improve my Resume ATS Score for MNCs?",
+                      },
+                      {
+                        label: "Salary Negotiation",
+                        prompt: "How should I negotiate a higher CTC package?",
+                      },
                     ].map((topic) => (
                       <button
-                        key={topic}
+                        key={topic.label}
                         onClick={() => {
-                          if (!isCallActive) handleStartVoiceCall();
-                          handleSendMessage(topic);
+                          if (!isCallActive) {
+                            handleStartVoiceCall();
+                            return;
+                          }
+                          if (liveClientRef.current?.isActive()) {
+                            liveClientRef.current.sendTextTurn(topic.prompt);
+                            setMessages((prev) => [
+                              ...prev,
+                              {
+                                id: `live-u-${Date.now()}`,
+                                sender: "user",
+                                text: topic.prompt,
+                                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                              },
+                            ]);
+                          } else {
+                            handleSendMessage(topic.prompt);
+                          }
                         }}
                         className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 rounded-lg text-[10px] font-bold transition cursor-pointer"
                       >
-                        {topic}
+                        {topic.label}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* CALL CONTROL BUTTONS */}
-                <div className="flex items-center justify-center gap-4 pt-2">
+                <div className="flex items-center justify-center gap-4 pt-1">
                   {/* Mute Button */}
                   <button
-                    onClick={() => setIsMuted(!isMuted)}
+                    onClick={() => {
+                      const nextMute = !isMuted;
+                      setIsMuted(nextMute);
+                      isMutedRef.current = nextMute;
+                      liveClientRef.current?.setMicMuted(nextMute);
+                      if (nextMute && speechRecognitionRef.current) {
+                        try {
+                          speechRecognitionRef.current.stop();
+                        } catch (_e) {
+                          // Ignore
+                        }
+                        speechRecognitionRef.current = null;
+                      } else if (!nextMute && isCallActiveRef.current && !liveClientRef.current?.isActive()) {
+                        startLiveListening(languageRef.current);
+                      }
+                    }}
                     disabled={!isCallActive}
                     className={`p-3.5 rounded-2xl transition cursor-pointer ${
                       isMuted
@@ -702,7 +1046,14 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
 
                   {/* Speaker Mute Button */}
                   <button
-                    onClick={() => setIsSpeakerMuted(!isSpeakerMuted)}
+                    onClick={() => {
+                      const nextSpeakerMute = !isSpeakerMuted;
+                      setIsSpeakerMuted(nextSpeakerMute);
+                      liveClientRef.current?.setSpeakerMuted(nextSpeakerMute);
+                      if (nextSpeakerMute) {
+                        stopSpeech();
+                      }
+                    }}
                     className={`p-3.5 rounded-2xl transition cursor-pointer ${
                       isSpeakerMuted
                         ? "bg-amber-50 text-amber-700 border border-amber-300 shadow-sm"
@@ -729,8 +1080,8 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
                     <div
                       className={`max-w-[85%] p-3.5 rounded-2xl text-xs space-y-1.5 shadow-md ${
                         msg.sender === "user"
-                          ? "bg-emerald-600 text-white rounded-br-none"
-                          : "bg-slate-950 text-slate-200 border border-slate-800 rounded-bl-none"
+                          ? "btn-apple-primary text-white rounded-br-sm"
+                          : "glass-vision text-slate-100 rounded-bl-sm"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1">
@@ -846,14 +1197,14 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
 
           {/* CHAT INPUT FOOTER */}
           {activeTab === "chat" && (
-            <div className="p-3 bg-slate-50 border-t border-slate-200 space-y-2 shrink-0">
+            <div className="p-3 bg-white/65 backdrop-blur-2xl border-t border-slate-900/8 space-y-2 shrink-0">
               {/* Quick Prompt Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px]">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] scrollbar-none">
                 <button
                   onClick={handleGenerateDailyJobsDigest}
-                  className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-lg shrink-0 transition font-bold flex items-center gap-1"
+                  className="bg-amber-400/18 hover:bg-amber-400/30 text-amber-950 border border-amber-300/60 px-2.5 py-1 rounded-full shrink-0 transition font-bold flex items-center gap-1 cursor-pointer"
                 >
-                  <Newspaper className="w-3 h-3 text-amber-700" /> 📰 Daily Digest
+                  <Newspaper className="w-3 h-3 text-amber-700" /> Daily Digest
                 </button>
 
                 {[
@@ -864,7 +1215,7 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
                   <button
                     key={cIdx}
                     onClick={() => handleSendMessage(chip.prompt)}
-                    className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg shrink-0 transition shadow-sm"
+                    className="bg-white/80 hover:bg-white text-slate-700 border border-slate-200/80 px-2.5 py-1 rounded-full shrink-0 transition shadow-2xs cursor-pointer"
                   >
                     {chip.label}
                   </button>
@@ -890,13 +1241,13 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
                   }
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 shadow-sm"
+                  className="flex-1 bg-white/90 border border-slate-200 rounded-full px-4 py-2 text-xs text-slate-900 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200/50 shadow-2xs"
                 />
 
                 <button
                   type="button"
                   onClick={handleStartVoiceCall}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 text-amber-700 rounded-xl transition"
+                  className="p-2 bg-white/85 hover:bg-white border border-slate-200 text-indigo-600 rounded-full transition cursor-pointer"
                   title="Voice Mode"
                 >
                   <Mic className="w-4 h-4" />
@@ -905,7 +1256,7 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
                 <button
                   type="submit"
                   disabled={!inputText.trim() || loadingResponse}
-                  className="p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition disabled:opacity-50 shadow-sm"
+                  className="p-2 btn-apple-primary text-white rounded-full disabled:opacity-50 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -914,7 +1265,7 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
           )}
 
           {/* CORPORATE ATTRIBUTION FOOTER STRIP */}
-          <div className="bg-slate-900 text-slate-300 px-3 py-1.5 text-[10px] flex items-center justify-between border-t border-slate-800 shrink-0">
+          <div className="apple-mesh-dark text-slate-300 px-3.5 py-2 text-[10px] flex items-center justify-between border-t border-white/10 shrink-0">
             <span className="truncate">
               By <strong className="text-white font-bold">Quench Research Labs Pvt. Ltd.</strong>
             </span>

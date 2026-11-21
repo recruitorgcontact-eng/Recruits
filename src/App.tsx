@@ -1,6 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserRoleMode, LanguageCode, CareerMemory, CareerScoreBreakdown } from "./types";
-import { DEFAULT_CAREER_MEMORY, INITIAL_CAREER_SCORE } from "./data/mockData";
+import {
+  CAREER_MEMORY_STORAGE_KEY,
+  CAREER_SCORE_STORAGE_KEY,
+  loadCareerMemoryFromStorage,
+  saveCareerMemoryToStorage,
+  loadCareerScoreFromStorage,
+  saveCareerScoreToStorage,
+  normalizeCareerMemory,
+} from "./utils/careerMemoryStorage";
 import { Header } from "./components/Header";
 import { WelcomeBanner } from "./components/WelcomeBanner";
 import { EngineSelector } from "./components/EngineSelector";
@@ -31,8 +39,47 @@ export default function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [activeEngineId, setActiveEngineId] = useState<string>("liveindiajobs");
 
-  const [careerMemory, setCareerMemory] = useState<CareerMemory>(DEFAULT_CAREER_MEMORY);
-  const [careerScore, setCareerScore] = useState<CareerScoreBreakdown>(INITIAL_CAREER_SCORE);
+  const [careerMemory, setCareerMemory] = useState<CareerMemory>(() =>
+    loadCareerMemoryFromStorage()
+  );
+  const [careerScore, setCareerScore] = useState<CareerScoreBreakdown>(() =>
+    loadCareerScoreFromStorage()
+  );
+
+  // Persist careerMemory to LocalStorage whenever it changes
+  useEffect(() => {
+    saveCareerMemoryToStorage(careerMemory);
+  }, [careerMemory]);
+
+  // Persist careerScore to LocalStorage whenever it changes
+  useEffect(() => {
+    saveCareerScoreToStorage(careerScore);
+  }, [careerScore]);
+
+  // Keep careerMemory and careerScore synchronized across multiple browser tabs
+  useEffect(() => {
+    const handleStorageSync = (event: StorageEvent) => {
+      if (event.key === CAREER_MEMORY_STORAGE_KEY && event.newValue) {
+        try {
+          setCareerMemory(normalizeCareerMemory(JSON.parse(event.newValue)));
+        } catch (err) {
+          console.warn("Error parsing cross-tab careerMemory update:", err);
+        }
+      } else if (event.key === CAREER_SCORE_STORAGE_KEY && event.newValue) {
+        try {
+          const parsedScore = JSON.parse(event.newValue);
+          if (parsedScore && typeof parsedScore.totalScore === "number") {
+            setCareerScore(parsedScore);
+          }
+        } catch (err) {
+          console.warn("Error parsing cross-tab careerScore update:", err);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageSync);
+    return () => window.removeEventListener("storage", handleStorageSync);
+  }, []);
 
   const [isMemoryModalOpen, setIsMemoryModalOpen] = useState(false);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -56,13 +103,14 @@ export default function App() {
     }
   };
 
-  const handleRefreshScore = async () => {
+  const handleRefreshScore = async (memoryOverride?: CareerMemory) => {
+    const targetMemory = memoryOverride || careerMemory;
     setIsCalculatingScore(true);
     try {
       const res = await fetch("/api/ai/career-score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memory: careerMemory }),
+        body: JSON.stringify({ memory: targetMemory }),
       });
 
       if (res.ok) {
@@ -89,7 +137,7 @@ export default function App() {
             selectedLanguage={selectedLanguage}
             onUpdateMemory={(updated) => {
               setCareerMemory(updated);
-              handleRefreshScore();
+              handleRefreshScore(updated);
             }}
           />
         );
@@ -99,7 +147,7 @@ export default function App() {
             memory={careerMemory}
             onUpdateMemory={(updated) => {
               setCareerMemory(updated);
-              handleRefreshScore();
+              handleRefreshScore(updated);
             }}
             onOpenMemoryModal={() => setIsMemoryModalOpen(true)}
           />
@@ -128,7 +176,7 @@ export default function App() {
             memory={careerMemory}
             onUpdateMemory={(updated) => {
               setCareerMemory(updated);
-              handleRefreshScore();
+              handleRefreshScore(updated);
             }}
           />
         );
@@ -139,6 +187,10 @@ export default function App() {
             selectedLanguage={selectedLanguage}
             isSpeaking={isSpeaking}
             setIsSpeaking={setIsSpeaking}
+            onUpdateMemory={(updated) => {
+              setCareerMemory(updated);
+              handleRefreshScore(updated);
+            }}
           />
         );
       case "skillgap":
@@ -171,11 +223,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50/90 via-purple-50/60 to-amber-50/70 text-slate-800 font-sans antialiased selection:bg-indigo-600 selection:text-white pb-20 relative overflow-x-hidden">
-      {/* Ambient colorful background light halos */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-indigo-200/40 via-purple-200/20 to-transparent blur-3xl pointer-events-none -z-10" />
-      <div className="fixed bottom-0 right-0 w-[600px] h-[600px] bg-pink-200/30 rounded-full blur-[120px] pointer-events-none -z-10" />
-      <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-amber-200/30 rounded-full blur-[120px] pointer-events-none -z-10" />
+    <div className="min-h-screen apple-mesh-light text-slate-900 font-sans antialiased selection:bg-indigo-600 selection:text-white pb-20 relative overflow-x-hidden">
+      {/* Layered Luminous Mesh Halos for Authentic Liquid Glass Refraction */}
+      <div className="fixed -top-24 left-1/2 -translate-x-1/2 w-[1100px] h-[520px] bg-gradient-to-b from-sky-300/25 via-indigo-300/20 to-transparent blur-[110px] pointer-events-none -z-10" />
+      <div className="fixed top-1/3 -right-32 w-[560px] h-[560px] bg-gradient-to-tr from-violet-300/25 via-fuchsia-200/20 to-sky-200/20 rounded-full blur-[130px] pointer-events-none -z-10" />
+      <div className="fixed bottom-0 -left-24 w-[520px] h-[520px] bg-gradient-to-tr from-amber-200/25 via-rose-200/18 to-indigo-200/20 rounded-full blur-[130px] pointer-events-none -z-10" />
 
       {/* Top Header */}
       <Header
@@ -206,7 +258,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 pt-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
         {currentView === "landing" ? (
           <HeroLandingPage
             onEnterWorkspace={(engineId, mode) => {
@@ -235,9 +287,10 @@ export default function App() {
               roleMode={roleMode}
             />
 
-            {/* Render Selected Engine Module in Bright Ultra-Clean Glass Shell */}
-            <div className="bg-white/90 backdrop-blur-2xl border border-slate-200/80 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/60 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute -top-32 -left-32 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+            {/* Render Selected Engine Module in Frosted Apple Liquid Glass Shell */}
+            <div className="glass-apple rounded-[2rem] p-4 sm:p-6 lg:p-7 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute -top-36 -left-36 w-96 h-96 bg-gradient-to-br from-indigo-400/12 via-sky-300/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-36 -right-36 w-96 h-96 bg-gradient-to-tl from-purple-400/10 via-amber-300/10 to-transparent rounded-full blur-3xl pointer-events-none" />
               <div className="relative z-10">{renderActiveEngine()}</div>
             </div>
           </>
@@ -274,7 +327,7 @@ export default function App() {
         onClose={() => setIsMemoryModalOpen(false)}
         onSaveMemory={(updated) => {
           setCareerMemory(updated);
-          handleRefreshScore();
+          handleRefreshScore(updated);
         }}
       />
 

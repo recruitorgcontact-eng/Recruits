@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Database, X, Plus, Trash2, ShieldCheck, Check, Save, Trophy, Award, UserCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Database, X, Plus, Trash2, ShieldCheck, Check, Save, Trophy, Award, UserCheck, RotateCcw } from "lucide-react";
 import { CareerMemory } from "../types";
+import { resetCareerMemoryInStorage } from "../utils/careerMemoryStorage";
 import { SkillMastery } from "./SkillMastery";
 
 interface CareerMemoryModalProps {
@@ -16,17 +17,29 @@ export const CareerMemoryModal: React.FC<CareerMemoryModalProps> = ({
   onClose,
   onSaveMemory,
 }) => {
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState<"skill_mastery" | "memory_vault">("skill_mastery");
   const [formMemory, setFormMemory] = useState<CareerMemory>({ ...memory });
   const [newSkill, setNewSkill] = useState("");
   const [newCert, setNewCert] = useState("");
   const [newLocation, setNewLocation] = useState("");
 
+  useEffect(() => {
+    if (isOpen) {
+      setFormMemory({ ...memory });
+    }
+  }, [memory, isOpen]);
+
+  if (!isOpen) return null;
+
   const handleSave = () => {
     onSaveMemory(formMemory);
     onClose();
+  };
+
+  const handleResetDefault = () => {
+    const fresh = resetCareerMemoryInStorage();
+    setFormMemory(fresh);
+    onSaveMemory(fresh);
   };
 
   const addSkill = () => {
@@ -89,9 +102,14 @@ export const CareerMemoryModal: React.FC<CareerMemoryModalProps> = ({
               <UserCheck className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Candidate User Profile & Skill Mastery</h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xl font-bold">Candidate User Profile & Skill Mastery</h2>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  <Check className="w-3 h-3" /> LocalStorage Auto-Synced
+                </span>
+              </div>
               <p className="text-xs text-slate-400">
-                Earned Badges, Goal Readiness & Arohi Career Memory Vault
+                Earned Badges, Goal Readiness & Arohi Career Memory Vault (Persists Across Page Refreshes)
               </p>
             </div>
           </div>
@@ -140,7 +158,7 @@ export const CareerMemoryModal: React.FC<CareerMemoryModalProps> = ({
                 <div>
                   <p className="text-xs font-semibold text-slate-200">Career Memory Permission</p>
                   <p className="text-[11px] text-slate-400">
-                    Allow Arohi Career AI to remember education, skills, and goals across sessions.
+                    Allow Arohi Career AI to remember education, skills, and goals across sessions & page refreshes.
                   </p>
                 </div>
               </div>
@@ -332,20 +350,29 @@ export const CareerMemoryModal: React.FC<CareerMemoryModalProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-6 border-t border-slate-800 mt-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-slate-800 mt-6">
           <button
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition"
+            id="btn-reset-memory-vault"
+            onClick={handleResetDefault}
+            className="px-3.5 py-2 bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-300 border border-slate-700 text-slate-300 rounded-xl text-xs font-medium transition flex items-center gap-1.5 cursor-pointer"
           >
-            Cancel
+            <RotateCcw className="w-3.5 h-3.5" /> Reset to Default Profile
           </button>
-          <button
-            id="btn-save-memory-vault"
-            onClick={handleSave}
-            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <Save className="w-4 h-4" /> Save Memory Vault
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              id="btn-save-memory-vault"
+              onClick={handleSave}
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <Save className="w-4 h-4" /> Save Memory Vault
+            </button>
+          </div>
         </div>
       </div>
     )}
@@ -353,3 +380,4 @@ export const CareerMemoryModal: React.FC<CareerMemoryModalProps> = ({
 </div>
   );
 };
+

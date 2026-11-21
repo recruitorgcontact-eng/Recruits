@@ -35,18 +35,47 @@ import {
   ShieldCheck,
   AlertTriangle,
   HelpCircle,
+  Phone,
+  PhoneOff,
 } from "lucide-react";
 import { CareerMemory, MockInterviewQuestion, InterviewEvaluation, LanguageCode, InterviewCalendarEvent } from "../../types";
 import { speakText, listenToVoiceInput, stopSpeech } from "../../utils/speech";
+import { ArohiLiveAudioClient } from "../../utils/liveAudioClient";
 import { ToneAnalyzer } from "../ToneAnalyzer";
 import { QuickQuiz } from "../QuickQuiz";
 import { stressNoiseEngine, NoiseType } from "../../utils/audioNoiseSynthesizer";
+import { BRANDING_IMAGES } from "../../utils/brandingImages";
 
 interface InterviewCoachEngineProps {
   memory: CareerMemory;
   selectedLanguage: LanguageCode;
   isSpeaking: boolean;
   setIsSpeaking: (speaking: boolean) => void;
+  onUpdateMemory?: (updated: CareerMemory) => void;
+}
+
+interface RealtimeHintState {
+  readinessPercent: number;
+  liveCoachNudge: string;
+  detectedStarStages: {
+    situation: boolean;
+    task: boolean;
+    action: boolean;
+    result: boolean;
+  };
+  coveredKeywords: string[];
+  missingKeywords: string[];
+  recommendedNextPoint: string;
+}
+
+interface PracticeAttempt {
+  questionIndex: number;
+  question: string;
+  answer: string;
+  score: number;
+  wpm: number;
+  elapsedSeconds: number;
+  timestamp: string;
 }
 
 const INITIAL_CALENDAR_EVENTS: InterviewCalendarEvent[] = [
@@ -136,6 +165,7 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
   selectedLanguage,
   isSpeaking,
   setIsSpeaking,
+  onUpdateMemory,
 }) => {
   const [activeTab, setActiveTab] = useState<"voice_mock" | "quick_quiz" | "tone_analyzer" | "interview_calendar">("voice_mock");
 
@@ -149,11 +179,82 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
   const [currentQIndex, setCurrentQIndex] = useState(0);
 
   const [userAnswer, setUserAnswer] = useState("");
+  const [liveInterimText, setLiveInterimText] = useState("");
   const [isListeningMic, setIsListeningMic] = useState(false);
   const [recognitionInstance, setRecognitionInstance] = useState<any>(null);
 
+  // Interactive Live Voice & Real-Time Coaching State
+  const [autoVoiceFlow, setAutoVoiceFlow] = useState<boolean>(true);
+  const [autoEvaluateOnPause, setAutoEvaluateOnPause] = useState<boolean>(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [realtimeHint, setRealtimeHint] = useState<RealtimeHintState | null>(null);
+  const [fetchingHint, setFetchingHint] = useState<boolean>(false);
+  const [sessionHistory, setSessionHistory] = useState<PracticeAttempt[]>([]);
+
   const [evaluating, setEvaluating] = useState(false);
   const [evaluation, setEvaluation] = useState<InterviewEvaluation | null>(null);
+
+  const recognitionRef = React.useRef<any>(null);
+  const committedPrefixRef = React.useRef<string>("");
+  const isListeningRef = React.useRef<boolean>(false);
+  const lastHintWordCountRef = React.useRef<number>(0);
+  const lastHintTimestampRef = React.useRef<number>(0);
+  const pauseAutoEvalTimerRef = React.useRef<any>(null);
+  const userAnswerRef = React.useRef<string>("");
+  const currentQRef = React.useRef<MockInterviewQuestion | undefined>(undefined);
+  const elapsedSecondsRef = React.useRef<number>(0);
+
+  // Full-duplex Gemini Live Mock Interview state
+  const [liveInterviewActive, setLiveInterviewActive] = useState(false);
+  const [liveInterviewStatus, setLiveInterviewStatus] = useState<"idle" | "connecting" | "listening" | "speaking" | "thinking" | "error">("idle");
+  const [liveInterviewError, setLiveInterviewError] = useState("");
+  const [liveInterviewerCaption, setLiveInterviewerCaption] = useState("");
+  const [liveCandidateCaption, setLiveCandidateCaption] = useState("");
+  const liveInterviewClientRef = React.useRef<ArohiLiveAudioClient | null>(null);
+
+  useEffect(() => {
+    userAnswerRef.current = userAnswer;
+  }, [userAnswer]);
+
+  useEffect(() => {
+    currentQRef.current = questions[currentQIndex];
+  }, [questions, currentQIndex]);
+
+  useEffect(() => {
+    elapsedSecondsRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+
+  // Live microphone elapsed timer
+  useEffect(() => {
+    if (!isListeningMic) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isListeningMic]);
+
+  // Clean up mic, live audio & timers on unmount
+  useEffect(() => {
+    return () => {
+      if (pauseAutoEvalTimerRef.current) clearTimeout(pauseAutoEvalTimerRef.current);
+      liveInterviewClientRef.current?.stop();
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.onend = null;
+          recognitionRef.current.stop();
+        } catch (_e) {
+          // Ignore stop error
+        }
+      }
+    };
+  }, []);
+
+  // Derived live speech metrics
+  const trimmedWords = userAnswer.trim() ? userAnswer.trim().split(/\s+/).filter(Boolean) : [];
+  const liveWordCount = trimmedWords.length;
+  const liveWpm = elapsedSeconds >= 4 && liveWordCount > 0 ? Math.min(220, Math.round((liveWordCount / elapsedSeconds) * 60)) : 0;
+  const fillerMatches = userAnswer.match(/\b(um|uh|ah|basically|actually|you know|like|literally)\b/gi) || [];
+  const liveFillerCount = fillerMatches.length;
 
   // Interview Calendar State
   const [calendarEvents, setCalendarEvents] = useState<InterviewCalendarEvent[]>(INITIAL_CALENDAR_EVENTS);
@@ -207,13 +308,163 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
     };
   }, []);
 
+  const stopMicrophoneRecording = () => {
+    isListeningRef.current = false;
+    setIsListeningMic(false);
+    setLiveInterimText("");
+    if (pauseAutoEvalTimerRef.current) {
+      clearTimeout(pauseAutoEvalTimerRef.current);
+      pauseAutoEvalTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop();
+      } catch (_err) {
+        // Ignore stop notice
+      }
+      recognitionRef.current = null;
+    }
+    if (recognitionInstance) {
+      try {
+        recognitionInstance.onend = null;
+        recognitionInstance.stop();
+      } catch (_err) {
+        // Ignore stop notice
+      }
+      setRecognitionInstance(null);
+    }
+  };
+
+  const fetchRealtimeCoachingHint = async (transcriptSnapshot: string, qObj?: MockInterviewQuestion) => {
+    const targetQ = qObj || currentQRef.current;
+    if (!targetQ || !transcriptSnapshot.trim()) return;
+    setFetchingHint(true);
+    try {
+      const res = await fetch("/api/ai/interview-coach/realtime-hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: targetQ.question,
+          expectedKeyPoints: targetQ.expectedKeyPoints || [],
+          partialTranscript: transcriptSnapshot,
+          role,
+          elapsedSeconds: elapsedSecondsRef.current,
+          language: selectedLanguage,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRealtimeHint(data);
+      }
+    } catch (_err) {
+      // Silent graceful ignore during live dictation
+    } finally {
+      setFetchingHint(false);
+    }
+  };
+
+  const startMicrophoneRecording = (preserveExisting = true) => {
+    stopSpeech();
+    setIsSpeaking(false);
+
+    if (recognitionRef.current) return;
+
+    if (preserveExisting) {
+      committedPrefixRef.current = userAnswerRef.current.trim();
+    } else {
+      committedPrefixRef.current = "";
+      setUserAnswer("");
+      setElapsedSeconds(0);
+      lastHintWordCountRef.current = 0;
+    }
+
+    isListeningRef.current = true;
+    setIsListeningMic(true);
+
+    const rec = listenToVoiceInput(
+      selectedLanguage,
+      (transcript, _isFinal, details) => {
+        if (!isListeningRef.current) return;
+
+        const sessionFull = details?.fullSessionTranscript || transcript || "";
+        const prefix = committedPrefixRef.current;
+        const combinedAnswer = prefix
+          ? `${prefix} ${sessionFull}`.replace(/\s+/g, " ").trim()
+          : sessionFull.trim();
+
+        setUserAnswer(combinedAnswer);
+        userAnswerRef.current = combinedAnswer;
+        setLiveInterimText(details?.interimChunk || "");
+
+        // Trigger real-time AI whisper coaching every 8+ new words or 3.5 seconds
+        const wc = combinedAnswer.split(/\s+/).filter(Boolean).length;
+        const now = Date.now();
+        if (
+          wc >= 6 &&
+          (wc - lastHintWordCountRef.current >= 8 || now - lastHintTimestampRef.current >= 3500)
+        ) {
+          lastHintWordCountRef.current = wc;
+          lastHintTimestampRef.current = now;
+          fetchRealtimeCoachingHint(combinedAnswer);
+        }
+
+        // Optional Auto-Evaluate after a clear pause when hands-free auto-eval is enabled
+        if (autoEvaluateOnPause && wc >= 12) {
+          if (pauseAutoEvalTimerRef.current) {
+            clearTimeout(pauseAutoEvalTimerRef.current);
+          }
+          pauseAutoEvalTimerRef.current = setTimeout(() => {
+            if (isListeningRef.current && userAnswerRef.current.trim().split(/\s+/).length >= 12) {
+              stopMicrophoneRecording();
+              handleEvaluateAnswer(userAnswerRef.current);
+            }
+          }, 2600);
+        }
+      },
+      (err) => {
+        console.warn("Mic notice:", err);
+        if (err === "not-allowed" || err === "audio-capture") {
+          stopMicrophoneRecording();
+        }
+      },
+      () => {
+        // Auto-resume continuous mic if user hasn't clicked Stop
+        recognitionRef.current = null;
+        if (isListeningRef.current) {
+          committedPrefixRef.current = userAnswerRef.current.trim();
+          setTimeout(() => {
+            if (isListeningRef.current && !recognitionRef.current) {
+              startMicrophoneRecording(true);
+            }
+          }, 250);
+        } else {
+          setIsListeningMic(false);
+        }
+      },
+      () => {
+        stopSpeech();
+        setIsSpeaking(false);
+      }
+    );
+
+    recognitionRef.current = rec;
+    setRecognitionInstance(rec);
+  };
+
   const handleGenerateQuestions = async (roleOverride?: string, topicOverride?: string) => {
     const roleToUse = roleOverride || role;
     const topicToUse = topicOverride || topic;
 
+    stopMicrophoneRecording();
     setLoadingQuestions(true);
     setEvaluation(null);
+    setRealtimeHint(null);
     setUserAnswer("");
+    committedPrefixRef.current = "";
+    setElapsedSeconds(0);
+    lastHintWordCountRef.current = 0;
+
     try {
       const res = await fetch("/api/ai/interview-coach/questions", {
         method: "POST",
@@ -224,15 +475,17 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
           topic: topicToUse,
           isStressMode,
           pressureLevel,
+          language: selectedLanguage,
         }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        setQuestions(data.questions || []);
+        const qs: MockInterviewQuestion[] = data.questions || [];
+        setQuestions(qs);
         setCurrentQIndex(0);
-        if (data.questions && data.questions.length > 0) {
-          speakQuestion(data.questions[0].question);
+        if (qs.length > 0) {
+          speakQuestion(qs[0].question, 0, autoVoiceFlow);
         }
       }
     } catch (err) {
@@ -242,19 +495,26 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
     }
   };
 
-  const speakQuestion = (qText: string) => {
+  const speakQuestion = (qText: string, qNumberIdx?: number, autoListenAfter = false) => {
+    const idxToAnnounce = typeof qNumberIdx === "number" ? qNumberIdx : currentQIndex;
     setIsSpeaking(true);
     speakText({
-      text: `Question ${currentQIndex + 1}: ${qText}`,
+      text: `Question ${idxToAnnounce + 1}: ${qText}`,
       language: selectedLanguage,
       onStart: () => setIsSpeaking(true),
-      onEnd: () => setIsSpeaking(false),
+      onEnd: () => {
+        setIsSpeaking(false);
+        if (autoListenAfter) {
+          startMicrophoneRecording(false);
+        }
+      },
       onError: () => setIsSpeaking(false),
     });
   };
 
   const handleTriggerCurveballFollowUp = async () => {
     if (!questions[currentQIndex]) return;
+    stopMicrophoneRecording();
     setLoadingCurveball(true);
     try {
       const res = await fetch("/api/ai/interview-coach/curveball", {
@@ -275,15 +535,20 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
           const updatedQuestions = [...questions];
           updatedQuestions.splice(currentQIndex + 1, 0, cbQ);
           setQuestions(updatedQuestions);
-          setCurrentQIndex(currentQIndex + 1);
+          const nextIdx = currentQIndex + 1;
+          setCurrentQIndex(nextIdx);
           setUserAnswer("");
+          committedPrefixRef.current = "";
+          setElapsedSeconds(0);
+          lastHintWordCountRef.current = 0;
           setEvaluation(null);
+          setRealtimeHint(null);
 
           if (isNoiseActive) {
             stressNoiseEngine.playPaChime();
           }
 
-          speakQuestion(`PANEL CURVEBALL CHALLENGE: ${cbQ.question}`);
+          speakQuestion(`PANEL CURVEBALL CHALLENGE: ${cbQ.question}`, nextIdx, autoVoiceFlow);
         }
       }
     } catch (err) {
@@ -295,43 +560,42 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
 
   const handleToggleMic = () => {
     if (isListeningMic) {
-      if (recognitionInstance) {
-        recognitionInstance.stop();
+      stopMicrophoneRecording();
+      if (userAnswerRef.current.trim().split(/\s+/).length >= 5) {
+        fetchRealtimeCoachingHint(userAnswerRef.current);
       }
-      setIsListeningMic(false);
     } else {
-      setIsListeningMic(true);
-      const rec = listenToVoiceInput(
-        selectedLanguage,
-        (transcript) => {
-          setUserAnswer(transcript);
-        },
-        (err) => {
-          console.warn("Mic error:", err);
-          setIsListeningMic(false);
-        },
-        () => {
-          setIsListeningMic(false);
-        }
-      );
-      setRecognitionInstance(rec);
+      startMicrophoneRecording(true);
     }
   };
 
-  const handleEvaluateAnswer = async () => {
-    if (!userAnswer.trim() || !questions[currentQIndex]) return;
+  const handleEvaluateAnswer = async (answerOverride?: string) => {
+    const answerToEval = (answerOverride ?? userAnswer).trim();
+    const activeQ = questions[currentQIndex];
+    if (!answerToEval || !activeQ) return;
+
+    stopMicrophoneRecording();
     setEvaluating(true);
     try {
+      const finalWpm =
+        elapsedSecondsRef.current >= 4
+          ? Math.min(220, Math.round((answerToEval.split(/\s+/).length / elapsedSecondsRef.current) * 60))
+          : 132;
+      const finalFillers = (answerToEval.match(/\b(um|uh|ah|basically|actually|you know|like|literally)\b/gi) || []).length;
+
       const res = await fetch("/api/ai/interview-coach/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: questions[currentQIndex].question,
-          userAnswer,
+          question: activeQ.question,
+          userAnswer: answerToEval,
           role,
           isStressMode,
           backgroundNoiseActive: isNoiseActive,
           pressureLevel,
+          language: selectedLanguage,
+          wpm: finalWpm,
+          fillerCount: finalFillers,
         }),
       });
 
@@ -339,6 +603,33 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
         const data = await res.json();
         const evalData: InterviewEvaluation = data.evaluation;
         setEvaluation(evalData);
+
+        // Save into live Session History
+        const attempt: PracticeAttempt = {
+          questionIndex: currentQIndex + 1,
+          question: activeQ.question,
+          answer: answerToEval,
+          score: evalData.score,
+          wpm: evalData.toneAnalysis?.wordsPerMinute || finalWpm,
+          elapsedSeconds: elapsedSecondsRef.current,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setSessionHistory((prev) => [attempt, ...prev]);
+
+        // Sync completed mock interview into persistent CareerMemory LocalStorage
+        if (onUpdateMemory) {
+          const newHistoryEntry = {
+            id: `int-${Date.now()}`,
+            role,
+            date: new Date().toISOString().split("T")[0],
+            score: evalData.score,
+            feedback: evalData.mentorFeedbackSpeech || evalData.strengths?.[0] || "Completed AI Voice Mock Round",
+          };
+          onUpdateMemory({
+            ...memory,
+            interviewHistory: [newHistoryEntry, ...(memory.interviewHistory || [])].slice(0, 15),
+          });
+        }
 
         if (evalData.mentorFeedbackSpeech) {
           setIsSpeaking(true);
@@ -360,12 +651,78 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
 
   const handleNextQuestion = () => {
     if (currentQIndex < questions.length - 1) {
+      stopMicrophoneRecording();
       const nextIdx = currentQIndex + 1;
       setCurrentQIndex(nextIdx);
       setUserAnswer("");
+      committedPrefixRef.current = "";
+      setElapsedSeconds(0);
+      lastHintWordCountRef.current = 0;
       setEvaluation(null);
-      speakQuestion(questions[nextIdx].question);
+      setRealtimeHint(null);
+      speakQuestion(questions[nextIdx].question, nextIdx, autoVoiceFlow);
     }
+  };
+
+  const handleStartLiveGeminiInterview = async () => {
+    stopMicrophoneRecording();
+    stopSpeech();
+    setIsSpeaking(false);
+    setLiveInterviewError("");
+    setLiveInterviewerCaption("");
+    setLiveCandidateCaption("");
+    setLiveInterviewActive(true);
+    setLiveInterviewStatus("connecting");
+
+    const client = new ArohiLiveAudioClient();
+    liveInterviewClientRef.current = client;
+
+    const ok = await client.start({
+      language: selectedLanguage,
+      memory,
+      interviewContext: {
+        role,
+        level,
+        topic,
+        isStressMode,
+      },
+      callbacks: {
+        onStatusChange: (st) => {
+          setLiveInterviewStatus(st);
+          setIsSpeaking(st === "speaking");
+        },
+        onInputTranscript: (txt) => {
+          setLiveCandidateCaption((prev) => `${prev} ${txt}`.replace(/\s+/g, " ").trim());
+        },
+        onOutputTranscript: (txt) => {
+          setLiveInterviewerCaption((prev) => `${prev} ${txt}`.replace(/\s+/g, " ").trim());
+        },
+        onInterrupted: () => {
+          setIsSpeaking(false);
+          setLiveInterviewStatus("listening");
+        },
+        onTurnComplete: () => {
+          setLiveCandidateCaption("");
+        },
+        onError: (reason) => {
+          setLiveInterviewError(reason);
+        },
+      },
+    });
+
+    if (!ok) {
+      setLiveInterviewStatus("error");
+      setLiveInterviewError("Live WebSocket voice is temporarily busy or mic permission was declined. You can use the Standard Voice Mock Interview button right beside it!");
+      setLiveInterviewActive(false);
+    }
+  };
+
+  const handleStopLiveGeminiInterview = () => {
+    liveInterviewClientRef.current?.stop();
+    liveInterviewClientRef.current = null;
+    setLiveInterviewActive(false);
+    setLiveInterviewStatus("idle");
+    setIsSpeaking(false);
   };
 
   // CALENDAR FUNCTIONS
@@ -570,7 +927,7 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
             {/* Real-World Interview Studio Visual Banner */}
             <div className="relative h-44 sm:h-52 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
               <img
-                src="/src/assets/images/ai_interview_coaching_studio_1794927483943.jpg"
+                src={BRANDING_IMAGES.aiInterviewCoachingStudio}
                 alt="Confident Indian candidate in live AI Mock Interview Studio"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover object-center"
@@ -708,30 +1065,145 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
               )}
             </div>
 
-            <button
-              id="btn-start-mock-interview"
-              onClick={() => handleGenerateQuestions()}
-              disabled={loadingQuestions}
-              className={`w-full py-3 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer ${
-                isStressMode
-                  ? "bg-gradient-to-r from-rose-600 via-amber-600 to-rose-600 hover:from-rose-500 hover:to-amber-500 shadow-rose-600/30"
-                  : "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-600/20"
-              }`}
-            >
-              {loadingQuestions ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Preparing Arohi Mock Interview Stage...
-                </>
-              ) : isStressMode ? (
-                <>
-                  <Flame className="w-4 h-4 text-amber-200 animate-pulse" /> Launch High-Pressure Stress Test Session
-                </>
-              ) : (
-                <>
-                  <Video className="w-4 h-4 text-emerald-300" /> Start Standard Mock Interview Session
-                </>
-              )}
-            </button>
+            {/* Interactive Voice Practice Mode Settings Bar */}
+            <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-xl">
+                  <Radio className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-white">
+                    Interactive Hands-Free Speech-to-Text Mode
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    Arohi speaks each question, auto-opens your mic, and streams real-time STAR &amp; keyword feedback while you answer.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 text-xs shrink-0">
+                <label className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoVoiceFlow}
+                    onChange={(e) => setAutoVoiceFlow(e.target.checked)}
+                    className="accent-emerald-500 rounded cursor-pointer"
+                  />
+                  <span className="font-semibold text-slate-200">Auto-Listen After Question</span>
+                </label>
+
+                <label className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoEvaluateOnPause}
+                    onChange={(e) => setAutoEvaluateOnPause(e.target.checked)}
+                    className="accent-indigo-500 rounded cursor-pointer"
+                  />
+                  <span className="font-semibold text-slate-200">Auto-Evaluate on Pause</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <button
+                id="btn-start-mock-interview"
+                onClick={() => handleGenerateQuestions()}
+                disabled={loadingQuestions}
+                className={`w-full py-3 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer ${
+                  isStressMode
+                    ? "bg-gradient-to-r from-rose-600 via-amber-600 to-rose-600 hover:from-rose-500 hover:to-amber-500 shadow-rose-600/30"
+                    : "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-600/20"
+                }`}
+              >
+                {loadingQuestions ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Preparing Arohi Interactive Mock Interview Stage...
+                  </>
+                ) : isStressMode ? (
+                  <>
+                    <Flame className="w-4 h-4 text-amber-200 animate-pulse" /> Launch STAR Q&amp;A Stress Test
+                  </>
+                ) : (
+                  <>
+                    <Video className="w-4 h-4 text-emerald-300" /> Start Structured STAR Mock Interview
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => (liveInterviewActive ? handleStopLiveGeminiInterview() : handleStartLiveGeminiInterview())}
+                className={`w-full py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg cursor-pointer ${
+                  liveInterviewActive
+                    ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30"
+                    : "bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-indigo-600/25"
+                }`}
+              >
+                {liveInterviewActive ? (
+                  <>
+                    <PhoneOff className="w-4 h-4" /> End Live Gemini Interview Call
+                  </>
+                ) : (
+                  <>
+                    <Phone className="w-4 h-4 text-amber-200" /> Live Bidirectional Voice Interview (Aoede)
+                  </>
+                )}
+              </button>
+            </div>
+
+            {liveInterviewError && (
+              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl p-3 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />
+                <span>{liveInterviewError}</span>
+              </div>
+            )}
+
+            {liveInterviewActive && (
+              <div className="bg-slate-950 border border-indigo-500/40 rounded-2xl p-5 space-y-4 shadow-xl">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+                    <span className="text-xs font-extrabold text-white uppercase tracking-wider">
+                      Arohi Live Voice Mock Panel • Aoede ({liveInterviewStatus})
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => liveInterviewClientRef.current?.interruptPlayback()}
+                      className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1"
+                    >
+                      <Mic className="w-3.5 h-3.5" /> Interrupt &amp; Answer Now
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleStopLiveGeminiInterview}
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1"
+                    >
+                      <PhoneOff className="w-3.5 h-3.5" /> End
+                    </button>
+                  </div>
+                </div>
+
+                {liveInterviewerCaption && (
+                  <div className="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-3 text-xs text-indigo-100">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 block mb-1">
+                      Arohi Panelist (Live Audio Caption)
+                    </span>
+                    {liveInterviewerCaption}
+                  </div>
+                )}
+
+                {liveCandidateCaption && (
+                  <div className="bg-emerald-950/50 border border-emerald-500/30 rounded-xl p-3 text-xs text-emerald-100">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block mb-1">
+                      You (Live Mic Transcript)
+                    </span>
+                    {liveCandidateCaption}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Active Mock Interview Room */}
@@ -833,8 +1305,8 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
               </div>
 
               {/* Room Header */}
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full">
                     Question {currentQIndex + 1} of {questions.length}
                   </span>
@@ -846,12 +1318,22 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
                   )}
                 </div>
 
-                <button
-                  onClick={() => speakQuestion(questions[currentQIndex].question)}
-                  className="flex items-center gap-1.5 text-xs text-indigo-300 hover:text-white transition bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 cursor-pointer"
-                >
-                  <Volume2 className="w-3.5 h-3.5 text-indigo-400" /> Re-play Audio
-                </button>
+                <div className="flex items-center gap-2">
+                  {isSpeaking && (
+                    <button
+                      onClick={() => startMicrophoneRecording(true)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-amber-200 bg-amber-600/30 hover:bg-amber-600/50 px-3 py-1.5 rounded-xl border border-amber-500/40 cursor-pointer"
+                    >
+                      <Mic className="w-3.5 h-3.5 animate-pulse" /> Interrupt &amp; Answer Now
+                    </button>
+                  )}
+                  <button
+                    onClick={() => speakQuestion(questions[currentQIndex].question, currentQIndex, false)}
+                    className="flex items-center gap-1.5 text-xs text-indigo-300 hover:text-white transition bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 cursor-pointer"
+                  >
+                    <Volume2 className="w-3.5 h-3.5 text-indigo-400" /> Re-play Audio
+                  </button>
+                </div>
               </div>
 
               {/* CURVEBALL ALERT BANNER IF CURRENT QUESTION IS A CURVEBALL */}
@@ -877,92 +1359,269 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
                 </div>
               )}
 
-              {/* Question Text */}
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2">
+              {/* Question Text & Expected Key Themes Tracker */}
+              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3">
                 <h3 className="text-base font-bold text-white leading-relaxed">
                   "{questions[currentQIndex]?.question}"
                 </h3>
-                <div className="flex flex-wrap items-center gap-1.5 pt-2 text-[11px] text-slate-400">
-                  <span>Expected Key Themes:</span>
-                  {questions[currentQIndex]?.expectedKeyPoints?.map((pt, pIdx) => (
-                    <span key={pIdx} className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">
-                      {pt}
-                    </span>
-                  ))}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                  <span className="text-slate-400 font-semibold mr-1">Expected Key Themes Covered:</span>
+                  {questions[currentQIndex]?.expectedKeyPoints?.map((pt, pIdx) => {
+                    const isCovered =
+                      realtimeHint?.coveredKeywords?.includes(pt) ||
+                      pt
+                        .toLowerCase()
+                        .split(/[^a-z0-9]+/)
+                        .filter((t) => t.length > 3)
+                        .some((tok) => userAnswer.toLowerCase().includes(tok));
+                    return (
+                      <span
+                        key={pIdx}
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md border transition ${
+                          isCovered
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold"
+                            : "bg-slate-800 text-slate-300 border-slate-700"
+                        }`}
+                      >
+                        {isCovered && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
+                        {pt}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Answer Input */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Your Response (Type or Speak into Microphone)
-                  </label>
-                  <button
-                    onClick={handleToggleMic}
-                    className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border transition cursor-pointer ${
-                      isListeningMic
-                        ? "bg-rose-500/20 text-rose-300 border-rose-500/50 animate-pulse"
-                        : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20"
-                    }`}
-                  >
-                    <Mic className="w-3.5 h-3.5" />
-                    {isListeningMic ? "Recording Audio... (Click to Stop)" : "Speak via Microphone"}
-                  </button>
-                </div>
+              {/* LIVE REAL-TIME SPEECH-TO-TEXT & AI WHISPER COACH HUD */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                {/* Left 7 Cols: Live Mic Controls, Metrics & Transcript Box */}
+                <div className="lg:col-span-7 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                      <span>Your Spoken Response (Speech-to-Text)</span>
+                      {isListeningMic && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-rose-300 bg-rose-500/20 border border-rose-500/40 px-2 py-0.5 rounded-full animate-pulse">
+                          <Radio className="w-3 h-3" /> LIVE MIC ON
+                        </span>
+                      )}
+                    </label>
 
-                <textarea
-                  rows={5}
-                  value={userAnswer}
-                  onChange={(e) => setUserAnswer(e.target.value)}
-                  placeholder="Click microphone or type your answer using the STAR method (Situation, Task, Action, Result)..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 leading-relaxed"
-                />
+                    <div className="flex items-center gap-2">
+                      <button
+                        id="btn-toggle-mock-mic"
+                        onClick={handleToggleMic}
+                        className={`flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl border transition cursor-pointer ${
+                          isListeningMic
+                            ? "bg-rose-600 hover:bg-rose-500 text-white border-rose-400 shadow-md shadow-rose-600/30"
+                            : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400 shadow-md shadow-emerald-600/20"
+                        }`}
+                      >
+                        <Mic className="w-3.5 h-3.5" />
+                        {isListeningMic ? "Stop Listening" : userAnswer ? "Resume Mic" : "Speak Answer"}
+                      </button>
 
-                <div className="flex flex-wrap items-center justify-end gap-3">
-                  <button
-                    id="btn-trigger-stress-curveball"
-                    onClick={handleTriggerCurveballFollowUp}
-                    disabled={loadingCurveball}
-                    className="px-4 py-2.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-rose-600/30 disabled:opacity-50 cursor-pointer"
-                  >
-                    {loadingCurveball ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Panel Interjecting...
-                      </>
-                    ) : (
-                      <>
-                        <Flame className="w-4 h-4 text-amber-200" /> Trigger Panel Curveball
-                      </>
-                    )}
-                  </button>
+                      {userAnswer.trim() && (
+                        <button
+                          onClick={() => {
+                            stopMicrophoneRecording();
+                            committedPrefixRef.current = "";
+                            setUserAnswer("");
+                            setElapsedSeconds(0);
+                            lastHintWordCountRef.current = 0;
+                            setRealtimeHint(null);
+                          }}
+                          className="text-[11px] font-semibold text-slate-400 hover:text-slate-200 px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                  <button
-                    id="btn-evaluate-interview-ans"
-                    onClick={handleEvaluateAnswer}
-                    disabled={evaluating || !userAnswer.trim()}
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20 disabled:opacity-50 cursor-pointer"
-                  >
-                    {evaluating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Evaluating Answer...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 text-amber-200" /> Evaluate Response
-                      </>
-                    )}
-                  </button>
-                </div>
+                  {/* Live Speech Telemetry Strip */}
+                  <div className="grid grid-cols-4 gap-2 text-[11px] bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Time</span>
+                      <span className="font-mono font-bold text-white">
+                        {Math.floor(elapsedSeconds / 60).toString().padStart(2, "0")}:
+                        {(elapsedSeconds % 60).toString().padStart(2, "0")}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Words</span>
+                      <span className="font-bold text-emerald-300">{liveWordCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Pace</span>
+                      <span className="font-bold text-cyan-300">
+                        {liveWpm > 0 ? `${liveWpm} WPM` : "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Fillers</span>
+                      <span className={`font-bold ${liveFillerCount > 3 ? "text-amber-400" : "text-slate-200"}`}>
+                        {liveFillerCount}
+                      </span>
+                    </div>
+                  </div>
 
-                {/* Embedded Live Tone Analyzer Panel */}
-                <div className="pt-2">
-                  <ToneAnalyzer
-                    isRecording={isListeningMic}
-                    liveText={userAnswer}
-                    toneData={evaluation?.toneAnalysis}
+                  {liveInterimText && (
+                    <div className="bg-emerald-950/50 border border-emerald-500/30 rounded-xl px-3 py-1.5 text-[11px] text-emerald-200 flex items-center gap-2">
+                      <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse shrink-0" />
+                      <span className="truncate italic">Hearing live: "{liveInterimText}"</span>
+                    </div>
+                  )}
+
+                  <textarea
+                    rows={5}
+                    value={userAnswer}
+                    onChange={(e) => {
+                      setUserAnswer(e.target.value);
+                      committedPrefixRef.current = e.target.value;
+                    }}
+                    placeholder="Click 'Speak Answer' to answer aloud in real time via Speech-to-Text (or type manually using STAR: Situation, Task, Action, Result)..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 leading-relaxed"
                   />
+
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <button
+                      onClick={() => fetchRealtimeCoachingHint(userAnswer)}
+                      disabled={fetchingHint || liveWordCount < 3}
+                      className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-xl text-xs font-bold border border-slate-700 transition flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                    >
+                      {fetchingHint ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      )}
+                      Refresh Live Coach Hint
+                    </button>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        id="btn-trigger-stress-curveball"
+                        onClick={handleTriggerCurveballFollowUp}
+                        disabled={loadingCurveball}
+                        className="px-4 py-2.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-rose-600/30 disabled:opacity-50 cursor-pointer"
+                      >
+                        {loadingCurveball ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" /> Panel Interjecting...
+                          </>
+                        ) : (
+                          <>
+                            <Flame className="w-4 h-4 text-amber-200" /> Trigger Curveball
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        id="btn-evaluate-interview-ans"
+                        onClick={() => handleEvaluateAnswer()}
+                        disabled={evaluating || !userAnswer.trim()}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20 disabled:opacity-50 cursor-pointer"
+                      >
+                        {evaluating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" /> Evaluating Answer...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 text-amber-200" /> Stop &amp; Evaluate Answer
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Right 5 Cols: Real-Time AI Whisper Coach Panel */}
+                <div className="lg:col-span-5 bg-slate-950 border border-indigo-500/30 rounded-2xl p-4 flex flex-col justify-between space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-indigo-500/20 text-indigo-300 rounded-lg border border-indigo-500/30">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-extrabold text-white">Real-Time AI Whisper Coach</h4>
+                          <p className="text-[10px] text-slate-400">Streams feedback as you speak</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-lg">
+                        {realtimeHint?.readinessPercent ?? (liveWordCount > 0 ? 35 : 0)}% Ready
+                      </span>
+                    </div>
+
+                    {/* Readiness Progress Bar */}
+                    <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 transition-all duration-500"
+                        style={{
+                          width: `${realtimeHint?.readinessPercent ?? (liveWordCount > 0 ? Math.min(45, liveWordCount * 2) : 0)}%`,
+                        }}
+                      />
+                    </div>
+
+                    {/* Live Whisper Nudge */}
+                    <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-3 space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                        {fetchingHint ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Activity className="w-3 h-3 text-cyan-300" />
+                        )}
+                        Live Coaching Nudge
+                      </span>
+                      <p className="text-xs text-slate-100 leading-relaxed font-medium">
+                        {realtimeHint?.liveCoachNudge ||
+                          "Click 'Speak Answer' and begin explaining your approach. Arohi will whisper real-time STAR & keyword cues while you talk."}
+                      </p>
+                    </div>
+
+                    {/* Live STAR Framework Tracker */}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        Live STAR Structure Coverage
+                      </span>
+                      <div className="grid grid-cols-4 gap-1.5 text-[11px]">
+                        {[
+                          { key: "situation", label: "Situation", active: realtimeHint?.detectedStarStages?.situation },
+                          { key: "task", label: "Task", active: realtimeHint?.detectedStarStages?.task },
+                          { key: "action", label: "Action", active: realtimeHint?.detectedStarStages?.action },
+                          { key: "result", label: "Result", active: realtimeHint?.detectedStarStages?.result },
+                        ].map((stage) => (
+                          <div
+                            key={stage.key}
+                            className={`text-center py-1.5 px-1 rounded-xl border font-bold transition ${
+                              stage.active
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                : "bg-slate-900 text-slate-400 border-slate-800"
+                            }`}
+                          >
+                            {stage.active ? "✓ " : ""}
+                            {stage.label}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {realtimeHint?.recommendedNextPoint && (
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-[11px] flex items-center justify-between gap-2">
+                      <span className="text-slate-400">Suggested Next Point:</span>
+                      <span className="font-bold text-amber-300 text-right">{realtimeHint.recommendedNextPoint}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Embedded Live Tone Analyzer Panel */}
+              <div className="pt-1">
+                <ToneAnalyzer
+                  isRecording={isListeningMic}
+                  liveText={userAnswer}
+                  toneData={evaluation?.toneAnalysis}
+                />
               </div>
 
               {/* Evaluation Scorecard */}
@@ -1099,6 +1758,42 @@ export const InterviewCoachEngine: React.FC<InterviewCoachEngineProps> = ({
                     >
                       Next Question <Send className="w-3.5 h-3.5" />
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Session Practice History Log */}
+              {sessionHistory.length > 0 && (
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-extrabold text-slate-200 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Completed Practice Rounds ({sessionHistory.length})
+                    </h4>
+                    <span className="text-[10px] text-emerald-300 font-bold">
+                      Synced to Career Memory Vault
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {sessionHistory.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-emerald-300">Q{item.questionIndex}</span>
+                            <span className="text-[10px] text-slate-400">{item.timestamp}</span>
+                            <span className="text-[10px] bg-slate-800 text-cyan-300 px-2 py-0.5 rounded-md font-semibold">
+                              {item.wpm} WPM • {item.elapsedSeconds}s
+                            </span>
+                          </div>
+                          <p className="text-slate-300 line-clamp-1">{item.question}</p>
+                        </div>
+                        <span className="font-extrabold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 rounded-lg shrink-0">
+                          {item.score}/100
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

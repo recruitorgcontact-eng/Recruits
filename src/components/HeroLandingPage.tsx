@@ -62,6 +62,7 @@ import {
   OFFICIAL_POSTERS,
 } from "./engines/LearningAdvisorEngine";
 import { CompanyBrandLogo, FEATURED_MNC_BRANDS } from "./CompanyBrandLogo";
+import { BRANDING_IMAGES } from "../utils/brandingImages";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -601,9 +602,10 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
         {/* HERO HEADER + HIGH-VISIBILITY REAL CAREER PHOTOGRAPHY SHOWCASE */}
         <div ref={heroTitleRef} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch pt-2 will-change-transform">
           {/* Left 7 Cols: Brand Headline & Value Proposition */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-5 text-left">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-200/80 text-indigo-800 text-[11px] font-bold px-3.5 py-1 rounded-full">
+          <div className="lg:col-span-7 glass-apple rounded-[2rem] p-6 sm:p-8 flex flex-col justify-between space-y-5 text-left relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-to-br from-sky-400/16 via-indigo-400/14 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="space-y-3.5 relative z-10">
+              <div className="inline-flex items-center gap-2 bg-white/75 backdrop-blur-xl border border-white/90 text-indigo-700 text-[11px] font-bold px-3.5 py-1 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                 <span>
                   Powered by{" "}
@@ -611,7 +613,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                     href="https://arohiai.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-700 underline font-extrabold hover:text-indigo-900"
+                    className="text-indigo-700 underline font-extrabold hover:text-indigo-950"
                   >
                     arohiai.com
                   </a>{" "}
@@ -619,11 +621,11 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 </span>
               </div>
 
-              <div className="space-y-1">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-blue-600 tracking-tight leading-none">
+              <div className="space-y-1.5">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.035em] leading-none bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
                   RECRUITS.ORG.IN
                 </h1>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
+                <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-extrabold text-slate-950 tracking-[-0.025em] leading-snug">
                   India&apos;s Smartest AI Job Search, Skilling &amp; Campus Placement Hub
                 </h2>
               </div>
@@ -634,17 +636,17 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             </div>
 
             {/* Quick Proof Metrics Row */}
-            <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-900/8 relative z-10">
               <div>
-                <span className="text-lg sm:text-xl font-black text-blue-600 tabular-nums block">100,000+</span>
+                <span className="text-lg sm:text-2xl font-extrabold text-blue-600 tabular-nums tracking-tight block">100,000+</span>
                 <span className="text-[11px] text-slate-500 font-semibold">Verified Live Jobs</span>
               </div>
               <div>
-                <span className="text-lg sm:text-xl font-black text-emerald-600 tabular-nums block">100%</span>
+                <span className="text-lg sm:text-2xl font-extrabold text-emerald-600 tabular-nums tracking-tight block">100%</span>
                 <span className="text-[11px] text-slate-500 font-semibold">Placement Assistance</span>
               </div>
               <div>
-                <span className="text-lg sm:text-xl font-black text-indigo-600 tabular-nums block">10 Programs</span>
+                <span className="text-lg sm:text-2xl font-extrabold text-indigo-600 tabular-nums tracking-tight block">10 Programs</span>
                 <span className="text-[11px] text-slate-500 font-semibold">50 Modules Ready Now</span>
               </div>
             </div>
@@ -653,34 +655,34 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           {/* Right 5 Cols: Real-World Indian Graduates & Placement Photography Banner */}
           <div
             onClick={() => onEnterWorkspace("liveindiajobs")}
-            className="lg:col-span-5 relative rounded-3xl overflow-hidden border border-slate-200/90 shadow-lg group cursor-pointer min-h-[260px] sm:min-h-[300px] bg-slate-900"
+            className="lg:col-span-5 relative rounded-[2rem] overflow-hidden border border-white/75 shadow-[0_22px_50px_-16px_rgba(15,23,42,0.28)] group cursor-pointer min-h-[260px] sm:min-h-[300px] bg-slate-950"
           >
             <img
-              src="/src/assets/images/hero_career_graduates_1794910021124.jpg"
+              src={BRANDING_IMAGES.heroCareerGraduates}
               alt="Confident Indian graduates and professionals holding placement offer letters at modern tech park campus"
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent" />
-            <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2">
-              <span className="bg-slate-950/80 backdrop-blur-md text-amber-300 border border-amber-400/40 px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider">
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/92 via-slate-950/35 to-transparent" />
+            <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2">
+              <span className="bg-slate-950/60 backdrop-blur-xl text-amber-300 border border-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                 Learn • Work • Grow
               </span>
-              <span className="bg-emerald-500/90 text-slate-950 px-2.5 py-1 rounded-lg text-[10px] font-black">
+              <span className="bg-emerald-400/90 backdrop-blur-md text-slate-950 px-3 py-1 rounded-full text-[10px] font-extrabold shadow-sm">
                 2026–27 Drives Open
               </span>
             </div>
-            <div className="absolute bottom-4 left-4 right-4 text-white space-y-1.5">
-              <div className="text-xs font-bold text-cyan-300">
+            <div className="absolute bottom-5 left-5 right-5 text-white space-y-1.5">
+              <div className="text-xs font-semibold text-sky-300">
                 Real Career Outcomes Across India &amp; Odisha
               </div>
-              <h3 className="text-base sm:text-lg font-black leading-snug">
+              <h3 className="text-base sm:text-lg font-extrabold leading-snug tracking-tight">
                 From Campus Skilling to Top MNC &amp; Government Offer Letters
               </h3>
               <div className="flex items-center justify-between text-[11px] text-slate-200 pt-1">
                 <span>Explore Verified Placement Drives &amp; Courses</span>
                 <span className="font-extrabold text-amber-300 flex items-center gap-1">
-                  Enter Hub <ArrowRight className="w-3.5 h-3.5" />
+                  Enter Hub <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </span>
               </div>
             </div>
@@ -693,10 +695,10 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           <div className="lg:col-span-8 space-y-6">
             
             {/* SEARCH CARD CONTAINER */}
-            <div className="bg-white rounded-2xl p-4 shadow-lg border border-slate-200/80 space-y-4">
+            <div className="glass-apple rounded-3xl p-4 sm:p-5 space-y-4">
               {/* INPUT ROW */}
-              <div className="relative flex flex-col md:flex-row items-center gap-2 bg-slate-50 rounded-xl p-2 border border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition">
-                <Search className="w-5 h-5 text-blue-600 ml-2 shrink-0" />
+              <div className="relative flex flex-col md:flex-row items-center gap-2 bg-white/75 backdrop-blur-xl rounded-2xl p-2 border border-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-200/60 transition">
+                <Search className="w-5 h-5 text-indigo-600 ml-2 shrink-0" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -710,16 +712,16 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                     }
                   }}
                   placeholder="Search Jobs, Companies, Skills or Government Vacancies..."
-                  className="w-full bg-transparent text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none px-2 py-1.5"
+                  className="w-full bg-transparent text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none px-2 py-1.5"
                 />
 
                 {/* SEARCH ACTION PILLS INSIDE INPUT BOX */}
                 <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                   <button
                     onClick={() => onEnterWorkspace("navigator")}
-                    className="flex items-center gap-1 bg-white hover:bg-blue-50 border border-slate-200 text-slate-700 hover:text-blue-600 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
+                    className="flex items-center gap-1 bg-white/85 hover:bg-indigo-50 border border-slate-200/80 text-slate-700 hover:text-indigo-700 px-2.5 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                     <span>AI Search</span>
                   </button>
 
@@ -733,10 +735,10 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                         });
                       }
                     }}
-                    className={`flex items-center gap-1 border px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer ${
+                    className={`flex items-center gap-1 border px-2.5 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer ${
                       isListening
                         ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
-                        : "bg-white hover:bg-slate-50 border-slate-200 text-slate-700"
+                        : "bg-white/85 hover:bg-white border-slate-200/80 text-slate-700"
                     }`}
                   >
                     <PhoneCall className="w-3.5 h-3.5 text-indigo-600" />
@@ -753,9 +755,9 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                   <button
                     onClick={() => heroResumeInputRef.current?.click()}
                     disabled={isUploadingHeroResume}
-                    className="flex items-center gap-1 bg-white hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-slate-700 hover:text-purple-700 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-60"
+                    className="flex items-center gap-1 bg-white/85 hover:bg-violet-50 border border-slate-200/80 hover:border-violet-300 text-slate-700 hover:text-violet-700 px-2.5 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-60"
                   >
-                    <FileText className="w-3.5 h-3.5 text-purple-600" />
+                    <FileText className="w-3.5 h-3.5 text-violet-600" />
                     <span>{isUploadingHeroResume ? "Parsing Resume..." : "Upload Resume"}</span>
                   </button>
 
@@ -767,7 +769,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                           : "Odisha";
                       setSearchLocation(nextLoc);
                     }}
-                    className="flex items-center gap-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
+                    className="flex items-center gap-1 bg-white/85 hover:bg-white border border-slate-200/80 text-slate-700 px-2.5 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer"
                   >
                     <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{searchLocation || "Location"}</span>
@@ -776,7 +778,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               </div>
 
               {/* ACTION BUTTONS BELOW SEARCH BAR */}
-              <div className="flex items-center justify-center gap-3 pt-1">
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                 <button
                   onClick={() =>
                     handleLaunchJobSearchWithFilter({
@@ -784,7 +786,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                       location: searchLocation || undefined,
                     })
                   }
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm px-8 py-2.5 rounded-full shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 cursor-pointer"
+                  className="btn-apple-primary text-white font-bold text-sm px-8 py-2.5 rounded-full flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Search className="w-4 h-4" />
                   <span>Search Jobs</span>
@@ -792,9 +794,9 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
 
                 <button
                   onClick={() => onEnterWorkspace("navigator")}
-                  className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-extrabold text-sm px-8 py-2.5 rounded-full shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
+                  className="bg-white/80 hover:bg-white backdrop-blur-xl text-slate-900 border border-white/95 font-bold text-sm px-7 py-2.5 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_-8px_rgba(15,23,42,0.12)] transition flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4 text-blue-600" />
+                  <Sparkles className="w-4 h-4 text-indigo-600" />
                   <span>Ask Recruit AI</span>
                 </button>
 
@@ -803,7 +805,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                     sessionStorage.setItem("arohi_learning_tab_handoff", "classroom");
                     onEnterWorkspace("learning");
                   }}
-                  className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-full transition cursor-pointer"
+                  className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50/85 hover:bg-emerald-100/90 backdrop-blur-md border border-emerald-300/60 px-4 py-2.5 rounded-full transition cursor-pointer"
                 >
                   <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Start 10 Courses Free Preview →</span>
@@ -812,7 +814,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             </div>
 
             {/* 🔥 TRENDING JOBS TAG STRIP */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 space-y-2">
+            <div className="glass-apple rounded-3xl p-4 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
                   <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
@@ -820,7 +822,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 </span>
                 <button
                   onClick={() => onEnterWorkspace("liveindiajobs")}
-                  className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+                  className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
                 >
                   View All &gt;
                 </button>
@@ -846,9 +848,9 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                       setSearchQuery(tag);
                       handleLaunchJobSearchWithFilter({ query: tag });
                     }}
-                    className="flex items-center gap-1 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-blue-700 px-3 py-1.5 rounded-full whitespace-nowrap font-semibold transition cursor-pointer"
+                    className="flex items-center gap-1.5 bg-white/70 hover:bg-white border border-white/90 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 px-3.5 py-1.5 rounded-full whitespace-nowrap font-semibold transition shadow-2xs cursor-pointer"
                   >
-                    <TrendingUp className="w-3 h-3 text-slate-400" />
+                    <TrendingUp className="w-3 h-3 text-indigo-400" />
                     <span>{tag}</span>
                   </button>
                 ))}
@@ -858,20 +860,20 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             {/* 14 CATEGORY GRID CARDS */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {[
-                { title: "Government Jobs", sector: "Government", query: "", icon: Building, color: "text-blue-600 bg-blue-50 border-blue-200" },
-                { title: "Private Jobs", sector: "Private", query: "", icon: Briefcase, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-                { title: "Remote Jobs", sector: "All", query: "Remote", icon: Globe, color: "text-purple-600 bg-purple-50 border-purple-200" },
-                { title: "Internships", sector: "All", query: "Intern", icon: GraduationCap, color: "text-amber-600 bg-amber-50 border-amber-200" },
-                { title: "Walk-ins", sector: "Private", query: "Direct", icon: UserCheck, color: "text-pink-600 bg-pink-50 border-pink-200" },
-                { title: "Part-time", sector: "All", query: "Flexible", icon: Clock, color: "text-teal-600 bg-teal-50 border-teal-200" },
-                { title: "Freelance", sector: "Private", query: "Project", icon: Zap, color: "text-violet-600 bg-violet-50 border-violet-200" },
-                { title: "IT Jobs", sector: "Private", query: "Software", icon: Code, color: "text-cyan-600 bg-cyan-50 border-cyan-200" },
-                { title: "Healthcare", sector: "All", query: "Health", icon: Heart, color: "text-rose-600 bg-rose-50 border-rose-200" },
-                { title: "Engineering", sector: "All", query: "Engineer", icon: Layers, color: "text-orange-600 bg-orange-50 border-orange-200" },
-                { title: "Banking", sector: "Banking", query: "Bank", icon: Landmark, color: "text-indigo-600 bg-indigo-50 border-indigo-200" },
-                { title: "Mining", sector: "All", query: "Mining", icon: Pickaxe, color: "text-amber-700 bg-amber-50 border-amber-200" },
-                { title: "Education", sector: "Government", query: "Teacher", icon: BookOpen, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-                { title: "View All Categories", sector: "All", query: "", icon: Grid, color: "text-slate-600 bg-slate-100 border-slate-200" },
+                { title: "Government Jobs", sector: "Government", query: "", icon: Building, color: "text-blue-600 bg-blue-50/90 border-blue-200/70" },
+                { title: "Private Jobs", sector: "Private", query: "", icon: Briefcase, color: "text-emerald-600 bg-emerald-50/90 border-emerald-200/70" },
+                { title: "Remote Jobs", sector: "All", query: "Remote", icon: Globe, color: "text-purple-600 bg-purple-50/90 border-purple-200/70" },
+                { title: "Internships", sector: "All", query: "Intern", icon: GraduationCap, color: "text-amber-600 bg-amber-50/90 border-amber-200/70" },
+                { title: "Walk-ins", sector: "Private", query: "Direct", icon: UserCheck, color: "text-pink-600 bg-pink-50/90 border-pink-200/70" },
+                { title: "Part-time", sector: "All", query: "Flexible", icon: Clock, color: "text-teal-600 bg-teal-50/90 border-teal-200/70" },
+                { title: "Freelance", sector: "Private", query: "Project", icon: Zap, color: "text-violet-600 bg-violet-50/90 border-violet-200/70" },
+                { title: "IT Jobs", sector: "Private", query: "Software", icon: Code, color: "text-cyan-600 bg-cyan-50/90 border-cyan-200/70" },
+                { title: "Healthcare", sector: "All", query: "Health", icon: Heart, color: "text-rose-600 bg-rose-50/90 border-rose-200/70" },
+                { title: "Engineering", sector: "All", query: "Engineer", icon: Layers, color: "text-orange-600 bg-orange-50/90 border-orange-200/70" },
+                { title: "Banking", sector: "Banking", query: "Bank", icon: Landmark, color: "text-indigo-600 bg-indigo-50/90 border-indigo-200/70" },
+                { title: "Mining", sector: "All", query: "Mining", icon: Pickaxe, color: "text-amber-700 bg-amber-50/90 border-amber-200/70" },
+                { title: "Education", sector: "Government", query: "Teacher", icon: BookOpen, color: "text-emerald-600 bg-emerald-50/90 border-emerald-200/70" },
+                { title: "View All Categories", sector: "All", query: "", icon: Grid, color: "text-slate-600 bg-slate-100/90 border-slate-200/70" },
               ].map((cat) => {
                 const IconComponent = cat.icon || Building;
                 return (
@@ -883,39 +885,39 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                         query: cat.query,
                       })
                     }
-                    className="bg-white hover:bg-slate-50 p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition text-center flex flex-col items-center justify-center gap-2 group cursor-pointer"
+                    className="glass-apple-card p-3.5 rounded-2xl hover:-translate-y-0.5 text-center flex flex-col items-center justify-center gap-2 group cursor-pointer"
                   >
-                    <div className={`p-2.5 rounded-xl border ${cat.color} group-hover:scale-110 transition`}>
+                    <div className={`p-2.5 rounded-xl border ${cat.color} group-hover:scale-110 transition-transform`}>
                       <IconComponent className="w-5 h-5" />
                     </div>
-                    <span className="text-xs font-extrabold text-slate-800 leading-tight">
+                    <span className="text-xs font-bold text-slate-800 leading-tight">
                       {cat.title}
                     </span>
                   </button>
                 );
               })}
             </div>
-
           </div>
 
-          {/* RIGHT 4 COLS: MEET RECRUIT AI FLOATING CARD */}
-          <div className="lg:col-span-4 bg-gradient-to-b from-blue-50/80 via-white to-indigo-50/50 rounded-2xl p-5 border border-blue-200/90 shadow-lg space-y-4">
-            <div className="flex items-center gap-3 border-b border-blue-100 pb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-md">
+          {/* RIGHT 4 COLS: MEET RECRUIT AI FLOATING GLASS CARD */}
+          <div className="lg:col-span-4 glass-apple rounded-3xl p-5 space-y-4 relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-56 h-56 bg-gradient-to-br from-blue-400/18 via-indigo-400/14 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="flex items-center gap-3 border-b border-slate-900/8 pb-3.5 relative z-10">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_10px_22px_-6px_rgba(79,70,229,0.5)]">
                 <Bot className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900">
+                <h3 className="text-base font-extrabold text-slate-950 tracking-tight">
                   Meet Recruit AI
                 </h3>
-                <p className="text-xs font-bold text-blue-600">
+                <p className="text-xs font-semibold text-indigo-600">
                   Your Personal Career Adviser
                 </p>
               </div>
             </div>
 
             {/* QUICK ACTIONS LIST */}
-            <div className="space-y-2">
+            <div className="space-y-2 relative z-10">
               {[
                 { title: "Create Resume", icon: FileText, engine: "resume" },
                 { title: "Career Guidance", icon: Compass, engine: "navigator" },
@@ -929,15 +931,15 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                   <button
                     key={item.title}
                     onClick={() => onEnterWorkspace(item.engine)}
-                    className="w-full flex items-center justify-between p-2.5 bg-white hover:bg-blue-50/80 rounded-xl border border-slate-200/80 hover:border-blue-300 text-xs font-bold text-slate-800 transition cursor-pointer shadow-2xs"
+                    className="w-full flex items-center justify-between p-2.5 bg-white/65 hover:bg-white rounded-2xl border border-white/90 hover:border-indigo-300/70 text-xs font-bold text-slate-800 transition cursor-pointer shadow-2xs group"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 bg-blue-100/60 rounded-lg text-blue-600">
+                      <div className="p-1.5 bg-indigo-500/10 rounded-xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
                         <ItemIcon className="w-3.5 h-3.5" />
                       </div>
                       <span>{item.title}</span>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition" />
                   </button>
                 );
               })}
@@ -946,54 +948,54 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             {/* CHAT CTA BUTTON */}
             <button
               onClick={() => onEnterWorkspace("navigator")}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-full shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 btn-apple-primary text-white font-bold text-xs rounded-full flex items-center justify-center gap-2 cursor-pointer relative z-10"
             >
               <span>Chat with Recruit AI →</span>
             </button>
 
-            <div className="pt-2 border-t border-blue-100 text-center">
+            <div className="pt-2 border-t border-slate-900/8 text-center relative z-10">
               <a
                 href="https://arohiai.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 hover:underline inline-flex items-center gap-1"
+                className="text-[11px] font-bold text-indigo-700 hover:text-indigo-950 hover:underline inline-flex items-center gap-1"
               >
                 <Sparkles className="w-3 h-3 text-amber-500" />
-                <span>Powered by arohiai.com • Quench Research Labs Pvt. Ltd.</span>
+                <span>Powered by arohiai.com • Quench Research Labs</span>
               </a>
             </div>
           </div>
         </div>
 
         {/* KEY STATS BANNER ROW */}
-        <div ref={heroStatsRef} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/90 grid grid-cols-2 md:grid-cols-4 gap-6 text-center will-change-transform">
+        <div ref={heroStatsRef} className="glass-apple rounded-3xl p-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center will-change-transform">
           <div className="space-y-1">
-            <span className="text-2xl sm:text-3xl font-black text-blue-600 block">5 Million+</span>
-            <strong className="text-xs font-bold text-slate-800 block">Jobs</strong>
+            <span className="text-2xl sm:text-3xl font-extrabold text-blue-600 tabular-nums tracking-tight block">5 Million+</span>
+            <strong className="text-xs font-bold text-slate-900 block">Jobs</strong>
             <p className="text-[11px] text-slate-500">Updated every minute</p>
           </div>
           <div className="space-y-1">
-            <span className="text-2xl sm:text-3xl font-black text-emerald-600 block">200,000+</span>
-            <strong className="text-xs font-bold text-slate-800 block">Employers</strong>
+            <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tabular-nums tracking-tight block">200,000+</span>
+            <strong className="text-xs font-bold text-slate-900 block">Employers</strong>
             <p className="text-[11px] text-slate-500">Trusted by top companies</p>
           </div>
           <div className="space-y-1">
-            <span className="text-2xl sm:text-3xl font-black text-purple-600 block">1 Million+</span>
-            <strong className="text-xs font-bold text-slate-800 block">Candidates</strong>
+            <span className="text-2xl sm:text-3xl font-extrabold text-violet-600 tabular-nums tracking-tight block">1 Million+</span>
+            <strong className="text-xs font-bold text-slate-900 block">Candidates</strong>
             <p className="text-[11px] text-slate-500">Building successful careers</p>
           </div>
           <div className="space-y-1">
-            <span className="text-2xl sm:text-3xl font-black text-amber-500 block">98%</span>
-            <strong className="text-xs font-bold text-slate-800 block">AI Matching Accuracy</strong>
+            <span className="text-2xl sm:text-3xl font-extrabold text-amber-500 tabular-nums tracking-tight block">98%</span>
+            <strong className="text-xs font-bold text-slate-900 block">AI Matching Accuracy</strong>
             <p className="text-[11px] text-slate-500">Smart. Accurate. Reliable.</p>
           </div>
         </div>
 
         {/* 4 CONNECTED REAL-WORLD CAREER TRACK VISUAL CARDS */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/90 space-y-4">
+        <div className="glass-apple rounded-3xl p-6 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+              <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-950">
                 Explore Career Pathways by Real Industry &amp; Sector
               </h3>
               <p className="text-xs text-slate-500">
@@ -1014,7 +1016,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 title: "Civil Services & Govt. Administration",
                 subtitle: "UPSC • SSC • OPSC • State Secretariat",
                 stats: "18,400+ Active Posts",
-                img: "/src/assets/images/track_govt_civil_services_1794910022761.jpg",
+                img: BRANDING_IMAGES.trackGovtCivilServices,
                 actionLabel: "View Govt. Vacancies",
                 onClick: () => handleLaunchJobSearchWithFilter({ sector: "Government", query: "UPSC" }),
               },
@@ -1022,7 +1024,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 title: "IT, AI & Data Science MNCs",
                 subtitle: "TCS • Infosys • Wipro • Tech Mahindra",
                 stats: "42,000+ Tech Roles",
-                img: "/src/assets/images/track_it_cloud_ai_lab_1794910024883.jpg",
+                img: BRANDING_IMAGES.trackItCloudAiLab,
                 actionLabel: "Browse Tech & AI Jobs",
                 onClick: () => handleLaunchJobSearchWithFilter({ sector: "Private", query: "Software" }),
               },
@@ -1030,7 +1032,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 title: "Banking, BFSI & Financial Analytics",
                 subtitle: "SBI • HDFC Bank • ICICI • IBPS PO",
                 stats: "14,200+ Banking Jobs",
-                img: "/src/assets/images/track_banking_finance_hub_1794910026082.jpg",
+                img: BRANDING_IMAGES.trackBankingFinanceHub,
                 actionLabel: "Explore Banking Drives",
                 onClick: () => handleLaunchJobSearchWithFilter({ sector: "Banking", query: "Bank" }),
               },
@@ -1038,7 +1040,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 title: "Indian Railways, NALCO, OMC & Core PSUs",
                 subtitle: "RRB NTPC • Navratna PSUs • L&T Core",
                 stats: "19,800+ Core Posts",
-                img: "/src/assets/images/core_engineering_psu_railway_1794927485128.jpg",
+                img: BRANDING_IMAGES.coreEngineeringPsuRailway,
                 actionLabel: "Explore Railway & PSU Jobs",
                 onClick: () => handleLaunchJobSearchWithFilter({ sector: "Government", query: "Railway" }),
               },
@@ -1046,7 +1048,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 title: "Cloud Architecture, Cybersecurity & DevOps",
                 subtitle: "AWS • Azure • Ethical Hacking • SOC Labs",
                 stats: "11,600+ Cloud Roles",
-                img: "/src/assets/images/cybersecurity_cloud_command_1794927488158.jpg",
+                img: BRANDING_IMAGES.cybersecurityCloudCommand,
                 actionLabel: "View Cloud & Cyber Roles",
                 onClick: () => handleLaunchJobSearchWithFilter({ sector: "Private", query: "Cloud" }),
               },
@@ -1054,7 +1056,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 title: "80% Digital + 20% Physical Skilling",
                 subtitle: "10 Programs • 50 Instant Modules",
                 stats: "100% Placement Support",
-                img: "/src/assets/images/hybrid_classroom_mentorship_1794910028151.jpg",
+                img: BRANDING_IMAGES.hybridClassroomMentorship,
                 actionLabel: "Start Learning Immediately",
                 onClick: () => {
                   sessionStorage.setItem("arohi_learning_tab_handoff", "classroom");
@@ -1095,14 +1097,14 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
         </div>
 
         {/* FEATURED COMPANIES & TOP CARRIERS / BRANDS SHOWCASE */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/90 space-y-4">
+        <div className="glass-apple rounded-3xl p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-950">
                   Featured Top Brands, Carriers &amp; Hiring Companies
                 </h3>
-                <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="bg-emerald-500/12 text-emerald-800 border border-emerald-300/60 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                   Verified Logos • Active Drives
                 </span>
               </div>
@@ -1112,7 +1114,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             </div>
             <button
               onClick={() => onEnterWorkspace("liveindiajobs")}
-              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer self-start sm:self-auto"
+              className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer self-start sm:self-auto"
             >
               View All 18+ Hiring Brands &gt;
             </button>
@@ -1128,16 +1130,16 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                     query: company.searchQuery,
                   })
                 }
-                className="bg-slate-50/90 hover:bg-blue-50/80 border border-slate-200/90 hover:border-blue-400 p-3 rounded-2xl flex flex-col items-center justify-between gap-2 transition cursor-pointer hover:shadow-md hover:-translate-y-0.5 group"
+                className="glass-apple-card p-3 rounded-2xl flex flex-col items-center justify-between gap-2 cursor-pointer hover:-translate-y-0.5 group"
               >
                 <div className="h-11 flex items-center justify-center w-full">
                   <CompanyBrandLogo name={company.name} size="banner" />
                 </div>
-                <div className="w-full pt-1.5 border-t border-slate-200/70 flex items-center justify-between text-[10px]">
+                <div className="w-full pt-1.5 border-t border-slate-900/8 flex items-center justify-between text-[10px]">
                   <span className="font-bold text-slate-500 truncate max-w-[95px]">
                     {company.tagline}
                   </span>
-                  <span className="font-extrabold text-blue-700 bg-blue-100/80 group-hover:bg-blue-600 group-hover:text-white px-1.5 py-0.5 rounded transition shrink-0">
+                  <span className="font-extrabold text-indigo-700 bg-indigo-500/10 group-hover:bg-indigo-600 group-hover:text-white px-1.5 py-0.5 rounded-md transition shrink-0">
                     {company.openings}
                   </span>
                 </div>
@@ -1147,10 +1149,10 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
         </div>
 
         {/* TRENDING GOVERNMENT JOBS & PUBLIC AGENCIES SECTION */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/90 space-y-4">
+        <div className="glass-apple rounded-3xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+              <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-950">
                 Trending Government Agencies &amp; PSU Recruitments
               </h3>
               <p className="text-xs text-slate-500">
@@ -1159,7 +1161,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             </div>
             <button
               onClick={() => onEnterWorkspace("liveindiajobs")}
-              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+              className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
             >
               Browse All Government Vacancies &gt;
             </button>
@@ -1210,13 +1212,13 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       </section>
 
       {/* HIGH-IMPACT REAL-WORLD CAMPUS PLACEMENT MEGADRIVE, AI INTERVIEW STUDIO & UNIVERSITY PARTNERSHIP GALLERY */}
-      <section className="gsap-scroll-section bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 will-change-transform">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 pb-4">
+      <section className="gsap-scroll-section glass-apple rounded-[2rem] p-6 sm:p-8 space-y-6 will-change-transform">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-900/8 pb-4">
           <div className="space-y-1">
-            <span className="text-xs font-extrabold text-blue-600 uppercase tracking-wider">
+            <span className="text-xs font-extrabold text-indigo-600 uppercase tracking-wider">
               Recruits.org.in National Talent &amp; Placement Ecosystem
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-[-0.025em]">
               Where Campus Skilling Meets Real Corporate &amp; Government Careers
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 max-w-3xl">
@@ -1227,7 +1229,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           <div className="flex items-center gap-2.5 shrink-0">
             <button
               onClick={() => onEnterWorkspace("liveindiajobs")}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+              className="px-5 py-2.5 btn-apple-primary text-white font-bold text-xs rounded-full cursor-pointer flex items-center gap-1.5"
             >
               <span>Explore Live Placement Drives</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1242,7 +1244,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             className="lg:col-span-7 group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 min-h-[320px] sm:min-h-[380px] cursor-pointer shadow-md hover:shadow-xl transition"
           >
             <img
-              src="/src/assets/images/campus_placement_megadrive_1794927483546.jpg"
+              src={BRANDING_IMAGES.campusPlacementMegadrive}
               alt="Grand Campus Placement Megadrive and Career Expo with top MNC recruiters"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -1278,7 +1280,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 h-44 sm:h-[180px] cursor-pointer shadow-md hover:shadow-xl transition"
             >
               <img
-                src="/src/assets/images/ai_interview_coaching_studio_1794927483943.jpg"
+                src={BRANDING_IMAGES.aiInterviewCoachingStudio}
                 alt="1-on-1 AI Voice Mock Interview and Coaching Studio"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -1305,7 +1307,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 h-44 sm:h-[180px] cursor-pointer shadow-md hover:shadow-xl transition"
             >
               <img
-                src="/src/assets/images/university_mou_partnership_1794927487846.jpg"
+                src={BRANDING_IMAGES.universityMouPartnership}
                 alt="University and College Campus Talent Hub MoU Partnership"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -1328,18 +1330,18 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       </section>
 
       {/* LIVE HOT JOB TICKER SPOTLIGHT */}
-      <section className="gsap-scroll-section bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3 will-change-transform">
+      <section className="gsap-scroll-section glass-apple rounded-3xl p-4 sm:p-5 space-y-3 will-change-transform">
         <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-100 text-rose-800 rounded-lg font-black text-[11px]">
-              <Flame className="w-3.5 h-3.5 text-rose-600 animate-bounce" /> LIVE JOB SPOTLIGHT
+            <span className="flex items-center gap-1.5 px-3 py-1 bg-rose-500/12 text-rose-700 border border-rose-300/60 rounded-full font-extrabold text-[11px]">
+              <Flame className="w-3.5 h-3.5 text-rose-600" /> LIVE JOB SPOTLIGHT
             </span>
-            <span className="text-slate-500 font-medium hidden sm:inline">Crawling verified government & employer feeds:</span>
+            <span className="text-slate-500 font-medium hidden sm:inline">Crawling verified government &amp; employer feeds:</span>
           </div>
 
           <button
             onClick={() => onEnterWorkspace("liveindiajobs")}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
           >
             View All 100,000+ Jobs <ArrowRight className="w-3.5 h-3.5" />
           </button>
@@ -1350,14 +1352,14 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             <div
               key={job.id}
               onClick={() => onEnterWorkspace("liveindiajobs")}
-              className="p-3 bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 hover:border-indigo-300 rounded-xl transition cursor-pointer group space-y-1.5"
+              className="glass-apple-card p-3.5 rounded-2xl cursor-pointer group space-y-1.5 hover:-translate-y-0.5"
             >
               <div className="flex items-center justify-between text-[10px] gap-1.5">
                 <div className="flex items-center gap-1.5 truncate">
                   <CompanyBrandLogo name={job.dept} size="sm" className="w-6 h-6 rounded-md" />
                   <span className="font-bold text-slate-600 uppercase truncate">{job.dept}</span>
                 </div>
-                <span className="bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded text-[9px] border border-amber-300 shrink-0">
+                <span className="bg-amber-400/20 text-amber-900 font-bold px-1.5 py-0.5 rounded-md text-[9px] border border-amber-300/60 shrink-0">
                   {job.badge}
                 </span>
               </div>
@@ -1366,7 +1368,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               </h4>
               <div className="flex items-center justify-between text-[10px] text-slate-500">
                 <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-400" /> {job.loc}</span>
-                <span className="text-indigo-600 font-bold">Match & Apply →</span>
+                <span className="text-indigo-600 font-bold">Match &amp; Apply →</span>
               </div>
             </div>
           ))}
@@ -1374,20 +1376,20 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       </section>
 
       {/* 10-SECOND AI CAREER READINESS CALCULATOR WIDGET */}
-      <section className="gsap-scroll-section bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white border border-indigo-700/50 shadow-xl space-y-6 will-change-transform">
+      <section className="gsap-scroll-section apple-mesh-dark rounded-[2rem] p-6 sm:p-8 text-white border border-white/15 shadow-[0_28px_60px_-20px_rgba(6,9,23,0.7)] space-y-6 will-change-transform relative overflow-hidden">
         <div className="max-w-3xl space-y-2 text-center sm:text-left">
-          <span className="text-xs font-extrabold uppercase tracking-wider text-amber-300 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-300/30">
-            ⚡ Interactive AI Diagnostic Tool
+          <span className="text-[11px] font-bold uppercase tracking-widest text-amber-300 bg-amber-400/12 px-3 py-1 rounded-full border border-amber-300/30">
+            Interactive AI Diagnostic Tool
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-white">
-            Instant 10-Second Career Readiness & Eligibility Check
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.025em] text-white">
+            Instant 10-Second Career Readiness &amp; Eligibility Check
           </h2>
-          <p className="text-xs sm:text-sm text-indigo-200">
+          <p className="text-xs sm:text-sm text-indigo-100/80">
             Select your target career stream to get instant AI fit forecasting before applying.
           </p>
         </div>
 
-        <form onSubmit={runQuickReadinessCheck} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+        <form onSubmit={runQuickReadinessCheck} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end glass-vision p-4 sm:p-5 rounded-2xl">
           <div>
             <label className="block text-xs font-bold text-indigo-200 uppercase mb-1">Target Career Goal</label>
             <select
@@ -1497,12 +1499,12 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
 
       {/* INTELLIGENT BENTO GRID */}
       <section className="gsap-scroll-section space-y-6 will-change-transform">
-        <div className="text-center sm:text-left space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full border border-indigo-200">
+        <div className="text-center sm:text-left space-y-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-700 bg-white/75 backdrop-blur-xl px-3.5 py-1 rounded-full border border-white/90 shadow-2xs inline-block">
             Platform Capabilities
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
-            Integrated Career & Hiring Architecture
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.025em] text-slate-950">
+            Integrated Career &amp; Hiring Architecture
           </h2>
         </div>
 
@@ -1510,25 +1512,25 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           {/* CARD 1: LIVE INDIA JOBS ENGINE */}
           <div
             onClick={() => onEnterWorkspace("liveindiajobs")}
-            className="group bg-white border border-slate-200 hover:border-indigo-500 rounded-3xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-xl space-y-4 flex flex-col justify-between relative overflow-hidden"
+            className="group glass-apple-card rounded-3xl p-6 hover:-translate-y-1 cursor-pointer space-y-4 flex flex-col justify-between relative overflow-hidden"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_10px_24px_-8px_rgba(79,70,229,0.5)] group-hover:scale-105 transition-transform">
                 <Briefcase className="w-6 h-6" />
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
                   Real-time Crawler
                 </span>
-                <h3 className="text-lg font-extrabold text-slate-900 mt-2">Live Govt & Private Jobs</h3>
+                <h3 className="text-lg font-extrabold text-slate-950 tracking-tight mt-0.5">Live Govt &amp; Private Jobs</h3>
                 <p className="text-xs text-slate-600 leading-relaxed mt-1">
                   Verified notification feeds for OPSC, SSC, Banking, Railways, and direct recruiter job postings with zero commission direct application.
                 </p>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-indigo-600 group-hover:text-indigo-800">
+            <div className="pt-3 border-t border-slate-900/8 flex items-center justify-between text-xs font-extrabold text-indigo-600 group-hover:text-indigo-800">
               <span>Explore Live Jobs</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -1537,25 +1539,25 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           {/* CARD 2: AROHI VOICE & MOCK INTERVIEW */}
           <div
             onClick={() => onEnterWorkspace("interview")}
-            className="group bg-white border border-slate-200 hover:border-amber-500 rounded-3xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-xl space-y-4 flex flex-col justify-between"
+            className="group glass-apple-card rounded-3xl p-6 hover:-translate-y-1 cursor-pointer space-y-4 flex flex-col justify-between"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_10px_24px_-8px_rgba(245,158,11,0.5)] group-hover:scale-105 transition-transform">
                 <PhoneCall className="w-6 h-6" />
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-indigo-800 bg-indigo-100 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                  Voice Call & Odia Speech
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                  Voice Call &amp; Odia Speech
                 </span>
-                <h3 className="text-lg font-extrabold text-slate-900 mt-2">Arohi AI Voice Mentor</h3>
+                <h3 className="text-lg font-extrabold text-slate-950 tracking-tight mt-0.5">Arohi AI Voice Mentor</h3>
                 <p className="text-xs text-slate-600 leading-relaxed mt-1">
                   1-on-1 voice calls in Odia, Hindi, or English. STAR interview coaching, voice interruption detection, and acoustic confidence analysis.
                 </p>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-amber-600 group-hover:text-amber-800">
+            <div className="pt-3 border-t border-slate-900/8 flex items-center justify-between text-xs font-extrabold text-amber-600 group-hover:text-amber-800">
               <span>Start Voice Practice</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -1564,25 +1566,25 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           {/* CARD 3: ATS RESUME INTELLIGENCE */}
           <div
             onClick={() => onEnterWorkspace("resume")}
-            className="group bg-white border border-slate-200 hover:border-emerald-500 rounded-3xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-xl space-y-4 flex flex-col justify-between"
+            className="group glass-apple-card rounded-3xl p-6 hover:-translate-y-1 cursor-pointer space-y-4 flex flex-col justify-between"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_10px_24px_-8px_rgba(16,185,129,0.5)] group-hover:scale-105 transition-transform">
                 <FileText className="w-6 h-6" />
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
                   ATS Score Optimizer
                 </span>
-                <h3 className="text-lg font-extrabold text-slate-900 mt-2">Resume Rewriter & PDF Generator</h3>
+                <h3 className="text-lg font-extrabold text-slate-950 tracking-tight mt-0.5">Resume Rewriter &amp; PDF Generator</h3>
                 <p className="text-xs text-slate-600 leading-relaxed mt-1">
                   Upload your resume to get instant ATS match diagnostics, missing keyword additions, formatting fixes, and professional PDF export.
                 </p>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-emerald-600 group-hover:text-emerald-800">
+            <div className="pt-3 border-t border-slate-900/8 flex items-center justify-between text-xs font-extrabold text-emerald-600 group-hover:text-emerald-800">
               <span>Fix Resume ATS</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -1591,25 +1593,25 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           {/* CARD 4: 30s TECHNICAL & GK QUIZ */}
           <div
             onClick={() => onEnterWorkspace("skillmastery")}
-            className="group bg-white border border-slate-200 hover:border-purple-500 rounded-3xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-xl space-y-4 flex flex-col justify-between"
+            className="group glass-apple-card rounded-3xl p-6 hover:-translate-y-1 cursor-pointer space-y-4 flex flex-col justify-between"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_10px_24px_-8px_rgba(124,58,237,0.5)] group-hover:scale-105 transition-transform">
                 <Award className="w-6 h-6" />
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-purple-800 bg-purple-100 px-2.5 py-0.5 rounded-full border border-purple-300">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
                   Micro-Skill Mastery
                 </span>
-                <h3 className="text-lg font-extrabold text-slate-900 mt-2">30s Rapid Technical Quiz</h3>
+                <h3 className="text-lg font-extrabold text-slate-950 tracking-tight mt-0.5">30s Rapid Technical Quiz</h3>
                 <p className="text-xs text-slate-600 leading-relaxed mt-1">
                   Test your skills in JavaScript, React, Odisha GK, General Aptitude, and Verbal Reasoning with instant AI explanations.
                 </p>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-purple-600 group-hover:text-purple-800">
+            <div className="pt-3 border-t border-slate-900/8 flex items-center justify-between text-xs font-extrabold text-violet-600 group-hover:text-violet-800">
               <span>Take Quick Quiz</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -1618,32 +1620,32 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           {/* CARD 5: EMPLOYER & RECRUITER PORTAL */}
           <div
             onClick={() => onEnterWorkspace("recruiter", "recruiter")}
-            className="group bg-white border border-slate-200 hover:border-emerald-500 rounded-3xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-xl space-y-4 flex flex-col justify-between md:col-span-2"
+            className="group glass-apple-card rounded-3xl p-6 hover:-translate-y-1 cursor-pointer space-y-4 flex flex-col justify-between md:col-span-2"
           >
             <div className="flex items-start justify-between">
               <div className="space-y-3 max-w-lg">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-emerald-800 flex items-center justify-center text-white shadow-lg shadow-emerald-950/20 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-emerald-800 flex items-center justify-center text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_10px_24px_-8px_rgba(15,23,42,0.5)] group-hover:scale-105 transition-transform">
                   <Building2 className="w-6 h-6 text-emerald-300" />
                 </div>
 
                 <div>
-                  <span className="text-[11px] font-bold text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
                     Free Employer Service
                   </span>
-                  <h3 className="text-lg font-extrabold text-slate-900 mt-2">100% Free Job Postings for Employers</h3>
+                  <h3 className="text-lg font-extrabold text-slate-950 tracking-tight mt-0.5">100% Free Job Postings for Employers</h3>
                   <p className="text-xs text-slate-600 leading-relaxed mt-1">
-                    Recruiters & organizations can post job vacancies for free, track direct candidate applications, and use Arohi AI to rank candidate resumes automatically.
+                    Recruiters &amp; organizations can post job vacancies for free, track direct candidate applications, and use Arohi AI to rank candidate resumes automatically.
                   </p>
                 </div>
               </div>
 
               <div className="hidden sm:block text-right">
-                <span className="text-2xl font-black text-emerald-700">₹0 Fee</span>
+                <span className="text-2xl font-extrabold text-emerald-700 tabular-nums">₹0 Fee</span>
                 <span className="block text-[10px] text-slate-500 font-bold">Zero Commission</span>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-slate-900 group-hover:text-emerald-700">
+            <div className="pt-3 border-t border-slate-900/8 flex items-center justify-between text-xs font-extrabold text-slate-900 group-hover:text-emerald-700">
               <span>Post Job as Employer</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -1652,17 +1654,12 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       </section>
 
       {/* OFFICIAL INDUSTRY-READY TRAINING PROGRAMS & INSTITUTIONAL CAMPUS PARTNER ECOSYSTEM (2026–27) */}
-      <section className="gsap-scroll-section bg-gradient-to-br from-[#070b24] via-[#120d38] to-[#090d26] border-2 border-indigo-500/40 rounded-3xl p-6 sm:p-8 md:p-10 text-white space-y-8 shadow-2xl relative overflow-hidden will-change-transform">
-        {/* Neon Ambient Glows matching Official Posters */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/3 -right-24 w-96 h-96 bg-purple-600/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 left-1/3 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
-
+      <section className="gsap-scroll-section apple-mesh-dark border border-white/15 rounded-[2rem] p-6 sm:p-8 md:p-10 text-white space-y-8 shadow-[0_32px_70px_-20px_rgba(5,8,22,0.75)] relative overflow-hidden will-change-transform">
         {/* Header & Hybrid Delivery Pillars */}
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-indigo-500/30 pb-6">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-white/12 pb-6">
           <div className="space-y-3 max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-200 text-xs font-black tracking-wider uppercase">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sky-200 text-[11px] font-bold tracking-wider uppercase">
                 <GraduationCap className="w-3.5 h-3.5 text-amber-300" />
                 Recruits.org.in • Learn • Work • Grow
               </span>
@@ -1746,7 +1743,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch bg-slate-950/80 border border-indigo-500/30 rounded-2xl p-4">
           <div className="lg:col-span-5 relative rounded-xl overflow-hidden min-h-[190px] bg-slate-900">
             <img
-              src="/src/assets/images/hybrid_classroom_mentorship_1794910028151.jpg"
+              src={BRANDING_IMAGES.hybridClassroomMentorship}
               alt="80% Digital Learning + 20% Physical Classroom Tutoring on Recruits.org.in"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover"
@@ -1813,19 +1810,19 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                   sessionStorage.setItem("arohi_learning_tab_handoff", "classroom");
                   onEnterWorkspace("learning");
                 }}
-                className="group bg-slate-900/90 hover:bg-indigo-950/90 border border-indigo-500/40 hover:border-cyan-400 rounded-2xl p-3.5 flex items-center justify-between gap-3 transition-all cursor-pointer shadow-md hover:shadow-cyan-500/10"
+                className="group glass-vision-card rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:-translate-y-0.5"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0 border border-indigo-300/50 shadow">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 via-indigo-500 to-purple-600 text-white font-extrabold text-xs flex items-center justify-center shrink-0 border border-white/25 shadow">
                     {prog.number}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-xs sm:text-sm font-extrabold text-white group-hover:text-cyan-300 transition truncate">
+                    <h3 className="text-xs sm:text-sm font-extrabold text-white group-hover:text-sky-300 transition truncate">
                       {prog.title}
                     </h3>
                     <div className="flex items-center gap-2 text-[11px] text-indigo-200/80 mt-0.5 flex-wrap">
                       <span className="inline-flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-cyan-400" /> {prog.duration}
+                        <Clock className="w-3 h-3 text-sky-400" /> {prog.duration}
                       </span>
                       <span>•</span>
                       <span className="text-emerald-300 font-bold">5 Modules Ready • Start Immediately</span>
@@ -1834,13 +1831,13 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black uppercase">
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-400/15 border border-emerald-400/35 text-emerald-300 text-[10px] font-bold uppercase">
                     <Play className="w-2.5 h-2.5 fill-current" /> Start Now
                   </span>
-                  <div className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 border border-indigo-300/40 text-white font-black text-xs sm:text-sm shadow">
+                  <div className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/20 text-white font-extrabold text-xs sm:text-sm tabular-nums shadow-sm">
                     {prog.feeINR}
                   </div>
-                  <ChevronRight className="w-4 h-4 text-indigo-300 group-hover:translate-x-1 group-hover:text-cyan-300 transition-transform" />
+                  <ChevronRight className="w-4 h-4 text-indigo-300 group-hover:translate-x-1 group-hover:text-sky-300 transition-transform" />
                 </div>
               </div>
             ))}
@@ -1848,7 +1845,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
         </div>
 
         {/* 100% Placement Assistance Across 10 Major Sectors */}
-        <div className="relative z-10 bg-slate-950/80 border border-amber-400/30 rounded-2xl p-5 space-y-4">
+        <div className="relative z-10 glass-vision rounded-3xl p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0">
@@ -2001,13 +1998,9 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       />
 
       {/* COMMUNITY SUCCESS TICKER & MILESTONES SECTION */}
-      <section className="gsap-scroll-section bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 md:p-10 text-white space-y-6 shadow-2xl relative overflow-hidden will-change-transform">
-        {/* Glowing Orbs Background */}
-        <div className="absolute top-0 left-1/3 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-10 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <section className="gsap-scroll-section apple-mesh-dark border border-white/15 rounded-[2rem] p-6 sm:p-8 md:p-10 text-white space-y-6 shadow-[0_32px_70px_-20px_rgba(5,8,22,0.7)] relative overflow-hidden will-change-transform">
         {/* TOP CONTINUOUS MARQUEE RUNNING TICKER STRIP */}
-        <div className="relative z-10 bg-slate-950/90 border border-emerald-500/30 rounded-2xl p-3 overflow-hidden shadow-inner flex items-center gap-3">
+        <div className="relative z-10 glass-vision rounded-2xl p-3 overflow-hidden flex items-center gap-3">
           <div className="flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-xl border border-emerald-500/40 shrink-0 text-xs font-black tracking-wide uppercase">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <Trophy className="w-3.5 h-3.5 text-amber-300" />
@@ -2082,7 +2075,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               return (
                 <div
                   key={m.id}
-                  className="bg-slate-950/90 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 space-y-4 flex flex-col justify-between transition group hover:shadow-xl"
+                  className="glass-vision-card rounded-2xl p-5 space-y-4 flex flex-col justify-between group"
                 >
                   <div className="space-y-3">
                     {/* USER HEADER */}
@@ -2295,13 +2288,9 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       </section>
 
       {/* INDUSTRY PULSE SECTION (GROUNDED REAL-TIME NEWS & TRENDS) */}
-      <section className="gsap-scroll-section bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 md:p-10 text-white space-y-6 shadow-2xl relative overflow-hidden will-change-transform">
-        {/* Background ambient glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <section className="gsap-scroll-section apple-mesh-dark border border-white/15 rounded-[2rem] p-6 sm:p-8 md:p-10 text-white space-y-6 shadow-[0_32px_70px_-20px_rgba(5,8,22,0.7)] relative overflow-hidden will-change-transform">
         {/* HEADER ROW */}
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-5">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/12 pb-5">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-extrabold tracking-wide uppercase">
@@ -2382,7 +2371,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             return (
               <div
                 key={article.id}
-                className="bg-slate-950/90 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between transition group hover:shadow-xl"
+                className="glass-vision-card rounded-2xl p-5 space-y-3.5 flex flex-col justify-between group"
               >
                 <div className="space-y-2.5">
                   {/* TOP ROW: CATEGORY + SOURCE + DATE */}
@@ -2452,16 +2441,16 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       </section>
 
       {/* FOOTER CTA SECTION */}
-      <section className="gsap-scroll-section bg-gradient-to-r from-indigo-800 via-indigo-900 to-purple-900 border border-indigo-700 rounded-3xl p-8 sm:p-10 text-center space-y-6 shadow-xl text-white relative overflow-hidden will-change-transform">
+      <section className="gsap-scroll-section apple-mesh-dark border border-white/15 rounded-[2rem] p-8 sm:p-12 text-center space-y-6 shadow-[0_32px_70px_-20px_rgba(5,8,22,0.72)] text-white relative overflow-hidden will-change-transform">
         <div className="max-w-2xl mx-auto space-y-3 relative z-10">
-          <div className="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-extrabold px-3.5 py-1 rounded-full">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 text-xs font-bold px-3.5 py-1 rounded-full">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             <span>Quench Research Labs Private Limited • Flagship Ecosystem</span>
           </div>
-          <h3 className="text-2xl sm:text-3xl font-black text-white">
+          <h3 className="text-2xl sm:text-4xl font-extrabold tracking-[-0.03em] text-white">
             Ready to Accelerate Your Career on Recruits.org.in?
           </h3>
-          <p className="text-xs sm:text-sm text-indigo-200">
+          <p className="text-xs sm:text-sm text-indigo-100/85">
             Join candidates and employers advancing with Arohi AI Career &amp; Talent Intelligence (<a href="https://arohiai.com" target="_blank" rel="noopener noreferrer" className="text-amber-300 underline font-bold hover:text-amber-200">arohiai.com</a>), developed by <strong className="text-white">Quench Research Labs Private Limited</strong>.
           </p>
         </div>
@@ -2469,7 +2458,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
         <div className="flex flex-wrap items-center justify-center gap-3 relative z-10">
           <button
             onClick={() => onEnterWorkspace("liveindiajobs")}
-            className="px-8 py-4 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm sm:text-base rounded-2xl shadow-xl border border-amber-300 flex items-center gap-3 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+            className="px-8 py-4 bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 hover:brightness-105 text-slate-950 font-extrabold text-sm sm:text-base rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_36px_-12px_rgba(251,191,36,0.55)] flex items-center gap-3 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
           >
             <span>Enter AI Career Portal Workspace</span>
             <ArrowRight className="w-5 h-5 text-slate-950" />
@@ -2479,7 +2468,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             href="https://arohiai.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-6 py-4 bg-indigo-950/80 hover:bg-indigo-950 text-amber-300 font-black text-sm sm:text-base rounded-2xl shadow-lg border border-indigo-500/40 flex items-center gap-2 transition-all duration-300 hover:scale-[1.02]"
+            className="px-6 py-4 glass-vision-card text-amber-300 font-extrabold text-sm sm:text-base rounded-full flex items-center gap-2 transition-all duration-300 hover:-translate-y-0.5"
           >
             <Sparkles className="w-4 h-4 text-amber-300" />
             <span>Explore ArohiAI.com</span>

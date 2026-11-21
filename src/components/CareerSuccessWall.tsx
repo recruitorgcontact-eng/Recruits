@@ -29,6 +29,7 @@ import {
 import { speakText, stopSpeech } from "../utils/speech";
 import { LanguageCode } from "../types";
 import { CompanyBrandLogo } from "./CompanyBrandLogo";
+import { BRANDING_IMAGES } from "../utils/brandingImages";
 
 export interface TransformationStory {
   id: string;
@@ -482,19 +483,19 @@ export const CareerSuccessWall: React.FC<CareerSuccessWallProps> = ({
           {
             label: "OPSC, UPSC & State Secretariat Selections",
             sub: "Verified Civil Services & Public Sector Appointments",
-            img: "/src/assets/images/track_govt_civil_services_1794910022761.jpg",
+            img: BRANDING_IMAGES.trackGovtCivilServices,
             filter: "OPSC & State Govt",
           },
           {
             label: "Top MNC Tech & AI Engineering Offers",
             sub: "Placed at TCS, Infosys, Wipro & Tech Mahindra",
-            img: "/src/assets/images/track_it_cloud_ai_lab_1794910024883.jpg",
+            img: BRANDING_IMAGES.trackItCloudAiLab,
             filter: "Tech & Software",
           },
           {
             label: "SBI, HDFC & National Banking Selections",
             sub: "Probationary Officers & Financial Analysts",
-            img: "/src/assets/images/track_banking_finance_hub_1794910026082.jpg",
+            img: BRANDING_IMAGES.trackBankingFinanceHub,
             filter: "Banking & SSC",
           },
         ].map((banner) => (
