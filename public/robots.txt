@@ -1,0 +1,19 @@
+# Robots.txt for Recruits.org.in — Pan-India Jobs, Verified Training & Free Hiring
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /ws/
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+Sitemap: https://recruits.org.in/sitemap.xml

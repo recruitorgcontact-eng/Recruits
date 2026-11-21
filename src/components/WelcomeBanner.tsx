@@ -19,7 +19,7 @@ export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
   setIsSpeaking,
 }) => {
   const introQuote =
-    "Hi, I'm Arohi Career AI, your personal career companion on Recruits.org.in. Built on the Arohi AI platform (arohiai.com) by Quench Research Labs Private Limited, I'm here to guide you at every stage of your career.";
+    "Hi, I'm Arohi, your personal career companion on Recruits.org.in. Built on arohiai.com by Quench Research Labs Private Limited, I'm here to guide you at every stage of your career.";
 
   const handlePlayVoiceIntro = () => {
     setIsSpeaking(true);
@@ -43,32 +43,32 @@ export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
           <div className="inline-flex items-center gap-2 bg-white/75 backdrop-blur-xl border border-white/90 text-indigo-700 text-[11px] font-bold px-3.5 py-1 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.95)] flex-wrap">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
             <span>
-              Recruits.org.in Intelligence Engine • Powered by{" "}
+              Recruits.org.in • Powered by{" "}
               <a
                 href="https://arohiai.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline font-extrabold hover:text-indigo-950"
               >
-                arohiai.com
+                Arohi
               </a>{" "}
               (Quench Research Labs Pvt. Ltd.)
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-[-0.03em] text-slate-950 font-sans leading-[1.12]">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-[-0.035em] text-slate-950 font-sans leading-[1.1]">
             {roleMode === "candidate" ? (
               <>
-                Your Dedicated{" "}
+                Where India Trains.{" "}
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
-                  AI Career Officer
+                  Where India Gets Hired.
                 </span>
               </>
             ) : (
               <>
                 Next-Gen{" "}
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600">
-                  Recruiter & Talent Intelligence
+                  Recruiter &amp; Talent Intelligence
                 </span>
               </>
             )}

@@ -55,7 +55,7 @@ export const CareerScoreCard: React.FC<CareerScoreCardProps> = ({
           <div>
             <h2 className="text-2xl font-bold">AI Career Score Intelligence</h2>
             <p className="text-xs text-slate-400">
-              Dynamic multi-pillar rating calculated by Arohi Career AI
+              Dynamic multi-pillar rating calculated by Arohi
             </p>
           </div>
         </div>
@@ -83,7 +83,7 @@ export const CareerScoreCard: React.FC<CareerScoreCardProps> = ({
               <Zap className="w-4 h-4 text-amber-400" /> Actionable Score Booster Plan
             </h3>
             <p className="text-xs text-slate-400">
-              Arohi Career AI identified {careerScore.improvementActions.length} high-impact actions to boost your score to {Math.min(100, careerScore.totalScore + 15)}+:
+              Arohi identified {careerScore.improvementActions.length} high-impact actions to boost your score to {Math.min(100, careerScore.totalScore + 15)}+:
             </p>
 
             <div className="space-y-2">

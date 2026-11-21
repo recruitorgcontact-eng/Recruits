@@ -14,16 +14,33 @@ import {
   Bot,
 } from "lucide-react";
 import { UserRoleMode } from "../types";
+import {
+  PAN_INDIA_CITIES,
+  PAN_INDIA_GOVT_EXAMS,
+  PAN_INDIA_JOB_CATEGORIES,
+  REGIONAL_LANGUAGE_HUBS,
+  SEO_COURSES,
+  CORE_ENGINE_ROUTES,
+} from "../seo/panIndiaSeo";
 
 interface FooterProps {
   onNavigateToEngine: (engineId: string, role?: UserRoleMode) => void;
   onNavigateHome: () => void;
+  onNavigatePath?: (path: string) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onNavigateToEngine,
   onNavigateHome,
+  onNavigatePath,
 }) => {
+  const handleSeoLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    if (onNavigatePath) {
+      e.preventDefault();
+      onNavigatePath(path);
+    }
+  };
   return (
     <footer className="mt-16 apple-mesh-dark text-slate-300 border-t border-white/12 relative overflow-hidden">
       {/* Top Frosted Promotional Banner for ArohiAI.com */}
@@ -280,6 +297,137 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Pan-India Crawlable SEO Directory (Cities, Govt Exams, 10 Courses & Tools) */}
+      <nav
+        aria-label="Pan-India Jobs, Govt Exams & Training Directory"
+        className="border-t border-white/10 bg-white/[0.02] backdrop-blur-xl relative z-10"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-5 text-[11px]">
+          <div className="space-y-1.5">
+            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-fuchsia-300/90">
+              Search Jobs in Your Language (All-India 9 Languages)
+            </h5>
+            <div className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-slate-400">
+              <a
+                href="/"
+                onClick={(e) => handleSeoLinkClick(e, "/")}
+                className="hover:text-white transition font-semibold text-slate-300"
+              >
+                English (All India)
+              </a>
+              {REGIONAL_LANGUAGE_HUBS.map((hub) => (
+                <a
+                  key={hub.code}
+                  href={`/${hub.code}/jobs`}
+                  onClick={(e) => handleSeoLinkClick(e, `/${hub.code}/jobs`)}
+                  className="hover:text-white transition"
+                >
+                  {hub.nativeName} ({hub.englishName} Jobs)
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-cyan-300/90">
+              High-Demand Job Categories &amp; Qualifications
+            </h5>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-slate-400">
+              {PAN_INDIA_JOB_CATEGORIES.map((cat) => (
+                <a
+                  key={cat.slug}
+                  href={`/jobs/${cat.slug}`}
+                  onClick={(e) => handleSeoLinkClick(e, `/jobs/${cat.slug}`)}
+                  className="hover:text-white transition"
+                >
+                  {cat.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-sky-300/90">
+              Jobs Across India by City
+            </h5>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-slate-400">
+              {PAN_INDIA_CITIES.map((city) => (
+                <a
+                  key={city.slug}
+                  href={`/jobs/${city.slug}`}
+                  onClick={(e) => handleSeoLinkClick(e, `/jobs/${city.slug}`)}
+                  className="hover:text-white transition"
+                >
+                  Jobs in {city.name}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-amber-300/90">
+              Central &amp; State Govt Recruitment Hubs
+            </h5>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-slate-400">
+              {PAN_INDIA_GOVT_EXAMS.map((exam) => (
+                <a
+                  key={exam.slug}
+                  href={`/govt-jobs/${exam.slug}`}
+                  onClick={(e) => handleSeoLinkClick(e, `/govt-jobs/${exam.slug}`)}
+                  className="hover:text-white transition"
+                >
+                  {exam.shortName} Jobs ({exam.region})
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-300/90">
+              10 Verified Placement Training Programs
+            </h5>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-slate-400">
+              {SEO_COURSES.map((course) => (
+                <a
+                  key={course.slug}
+                  href={`/courses/${course.slug}`}
+                  onClick={(e) => handleSeoLinkClick(e, `/courses/${course.slug}`)}
+                  className="hover:text-white transition"
+                >
+                  {course.title}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-300/90">
+              Free Career Tools &amp; Recruiter Portals
+            </h5>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-slate-400">
+              {CORE_ENGINE_ROUTES.map((route) => (
+                <a
+                  key={route.path}
+                  href={route.path}
+                  onClick={(e) => handleSeoLinkClick(e, route.path)}
+                  className="hover:text-white transition"
+                >
+                  {route.label}
+                </a>
+              ))}
+              <a
+                href="/sitemap.xml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sky-300/80 hover:text-white transition"
+              >
+                XML Sitemap
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
 
       {/* Bottom Legal & Copyright Bar */}
       <div className="border-t border-white/10 bg-black/30 backdrop-blur-xl">

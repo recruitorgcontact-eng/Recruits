@@ -74,6 +74,7 @@ import { UnitWorkbookPlayer } from "./UnitWorkbookPlayer";
 
 interface LearningAdvisorEngineProps {
   memory: CareerMemory;
+  initialProgramId?: string;
 }
 
 export interface OfficialTrainingProgram {
@@ -275,14 +276,30 @@ export const OFFICIAL_POSTERS = [
   },
 ];
 
-export const LearningAdvisorEngine: React.FC<LearningAdvisorEngineProps> = ({ memory }) => {
-  const [activeTab, setActiveTab] = useState<"programs" | "classroom" | "institutions" | "posters_ai">("programs");
+export const LearningAdvisorEngine: React.FC<LearningAdvisorEngineProps> = ({
+  memory,
+  initialProgramId,
+}) => {
+  const [activeTab, setActiveTab] = useState<"programs" | "classroom" | "institutions" | "posters_ai">(
+    initialProgramId ? "classroom" : "programs"
+  );
 
   // Interactive Time-Enforced LMS Classroom State (Server-Authoritative across all 10 Courses & 50 Modules)
-  const [activeClassroomProgramId, setActiveClassroomProgramId] = useState<string>("prog-01-ds-ai");
+  const [activeClassroomProgramId, setActiveClassroomProgramId] = useState<string>(
+    initialProgramId || "prog-01-ds-ai"
+  );
   const [activeModuleIndex, setActiveModuleIndex] = useState<number>(0);
   const [activeUnitIndex, setActiveUnitIndex] = useState<number>(0);
   const [classroomSubTab, setClassroomSubTab] = useState<"lesson" | "lab" | "quiz" | "tutoring">("lesson");
+
+  useEffect(() => {
+    if (initialProgramId) {
+      setActiveClassroomProgramId(initialProgramId);
+      setActiveModuleIndex(0);
+      setActiveUnitIndex(0);
+      setActiveTab("classroom");
+    }
+  }, [initialProgramId]);
 
   // Stable persistent learner identifier for server-side study hour ledger
   const [learnerId] = useState<string>(() => {

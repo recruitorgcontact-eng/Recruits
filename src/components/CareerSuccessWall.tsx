@@ -407,7 +407,7 @@ export const CareerSuccessWall: React.FC<CareerSuccessWallProps> = ({
       ],
       testimonial:
         newStoryForm.testimonial ||
-        "Arohi Career AI provided structured guidance and real mock practice that transformed my career!",
+        "Arohi provided structured guidance and real mock practice that transformed my career!",
       likes: 1,
       userLiked: true,
       verifiedBadge: "Verified User Career Memory Log",
@@ -995,7 +995,7 @@ export const CareerSuccessWall: React.FC<CareerSuccessWallProps> = ({
                 <label className="block font-bold text-slate-300 mb-1">Testimonial Quote</label>
                 <textarea
                   rows={2}
-                  placeholder="How did Arohi Career AI help you succeed?"
+                  placeholder="How did Recruits.org.in & Arohi help you succeed?"
                   value={newStoryForm.testimonial}
                   onChange={(e) => setNewStoryForm({ ...newStoryForm, testimonial: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-400 resize-none"

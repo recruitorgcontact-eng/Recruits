@@ -158,7 +158,7 @@ export const CareerMemoryModal: React.FC<CareerMemoryModalProps> = ({
                 <div>
                   <p className="text-xs font-semibold text-slate-200">Career Memory Permission</p>
                   <p className="text-[11px] text-slate-400">
-                    Allow Arohi Career AI to remember education, skills, and goals across sessions & page refreshes.
+                    Allow Arohi to remember education, skills, and goals across sessions & page refreshes.
                   </p>
                 </div>
               </div>

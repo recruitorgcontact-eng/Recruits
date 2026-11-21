@@ -334,7 +334,7 @@ export const CareerMentorEngine: React.FC<CareerMentorEngineProps> = ({
                 rows={4}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask Arohi Career AI anything regarding career growth, promotions, higher education, or long-term strategy..."
+                placeholder="Ask Arohi anything regarding career growth, promotions, higher education, or long-term strategy..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 leading-relaxed"
               />
 
@@ -346,7 +346,7 @@ export const CareerMentorEngine: React.FC<CareerMentorEngineProps> = ({
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Arohi Career AI Thinking...
+                    <Loader2 className="w-4 h-4 animate-spin" /> Arohi is thinking...
                   </>
                 ) : (
                   <>
@@ -362,7 +362,7 @@ export const CareerMentorEngine: React.FC<CareerMentorEngineProps> = ({
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-xl space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <span className="text-xs font-bold text-purple-400 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-300" /> Arohi Career Mentor Response
+                  <Sparkles className="w-4 h-4 text-amber-300" /> Arohi Mentor Response
                 </span>
 
                 <button

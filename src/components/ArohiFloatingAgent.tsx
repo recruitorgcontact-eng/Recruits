@@ -722,7 +722,7 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
             id="btn-arohi-floating-trigger"
             onClick={() => setIsOpen(true)}
             className="aurora-ring w-12 h-12 sm:w-14 sm:h-14 rounded-full p-0.5 shadow-2xl hover:scale-105 transition duration-300 relative cursor-pointer shrink-0"
-            title="Arohi Career AI - Voice Call & Chat Assistant"
+            title="Arohi — Voice Call & Chat Assistant"
           >
             <div className="w-full h-full bg-slate-950/95 backdrop-blur-xl rounded-full flex items-center justify-center relative overflow-hidden">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-sky-400 via-indigo-500 to-fuchsia-500 flex items-center justify-center text-white font-extrabold text-sm sm:text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
@@ -749,7 +749,7 @@ export const ArohiFloatingAgent: React.FC<ArohiFloatingAgentProps> = ({
 
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-950 tracking-tight">Arohi AI</h3>
+                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-950 tracking-tight">Arohi</h3>
                   <span className="text-[9px] sm:text-[10px] bg-indigo-500/12 text-indigo-700 border border-indigo-300/60 px-2 py-0.5 rounded-full font-bold">
                     Career Coach
                   </span>

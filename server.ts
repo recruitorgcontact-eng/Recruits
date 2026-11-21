@@ -13,6 +13,12 @@ import {
   buildArohiLiveSystemInstruction,
   getInitialLiveWelcomePrompt,
 } from "./server/arohiMegaPrompt";
+import {
+  CANONICAL_DOMAIN,
+  generateRobotsTxt,
+  generateSitemapXml,
+  injectSeoIntoHtml,
+} from "./src/seo/panIndiaSeo";
 
 const app = express();
 const PORT = 3000;
@@ -3394,42 +3400,100 @@ Respond with deep technical clarity and warmth. Return ONLY valid JSON:
 // Serve static public assets in both dev and production without intercepting /src/* TypeScript/Vite modules
 app.use("/assets", express.static(path.join(process.cwd(), "public", "assets")));
 
-// Vite middleware & Static server setup
+function resolveSeoBaseUrl(req: express.Request): string {
+  const host = (req.get("host") || "").toLowerCase();
+  if (host.includes("recruits.org.in")) {
+    return CANONICAL_DOMAIN;
+  }
+  if (process.env.APP_URL) {
+    return process.env.APP_URL.replace(/\/+$/, "");
+  }
+  if (host && !host.startsWith("localhost") && !host.startsWith("127.0.0.1")) {
+    const proto = (req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0].trim();
+    return `${proto}://${host}`;
+  }
+  return CANONICAL_DOMAIN;
+}
+
+// Dynamic Search Engine Discovery Endpoints (/robots.txt & /sitemap.xml)
+app.get("/robots.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  res.send(generateRobotsTxt(resolveSeoBaseUrl(req)));
+});
+
+app.get("/sitemap.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  const db = loadPlatformDB();
+  res.send(generateSitemapXml(resolveSeoBaseUrl(req), db.jobs || []));
+});
+
+// Vite middleware & Static server setup with Per-Route Server-Side SEO Injection
 async function startServer() {
-  let viteMiddleware: any = null;
+  let viteServer: any = null;
   let viteInitPromise: Promise<void> | null = null;
 
   if (process.env.NODE_ENV !== "production") {
     viteInitPromise = (async () => {
       try {
-        const vite = await createViteServer({
+        viteServer = await createViteServer({
           server: {
             middlewareMode: true,
             hmr: false,
             watch: null,
           },
-          appType: "spa",
+          appType: "custom",
         });
-        viteMiddleware = vite.middlewares;
       } catch (err) {
         console.error("Vite middleware initialization error:", err);
       }
     })();
 
     app.use(async (req, res, next) => {
-      if (!viteMiddleware && viteInitPromise) {
+      if (!viteServer && viteInitPromise) {
         await viteInitPromise;
       }
-      if (viteMiddleware) {
-        return viteMiddleware(req, res, next);
+      if (viteServer) {
+        return viteServer.middlewares(req, res, next);
       }
       next();
     });
+
+    app.get("*", async (req, res, next) => {
+      if (req.path.startsWith("/api/") || req.path.startsWith("/ws/")) {
+        return next();
+      }
+      try {
+        if (!viteServer && viteInitPromise) {
+          await viteInitPromise;
+        }
+        const rawTemplate = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
+        const seoTemplate = injectSeoIntoHtml(rawTemplate, req.path, resolveSeoBaseUrl(req));
+        const finalHtml = viteServer
+          ? await viteServer.transformIndexHtml(req.originalUrl, seoTemplate)
+          : seoTemplate;
+        res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(finalHtml);
+      } catch (err) {
+        console.error("Dev SEO HTML render error:", err);
+        next(err);
+      }
+    });
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+    app.use(express.static(distPath, { index: false }));
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api/") || req.path.startsWith("/ws/")) {
+        return next();
+      }
+      try {
+        const rawHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
+        const seoHtml = injectSeoIntoHtml(rawHtml, req.path, resolveSeoBaseUrl(req));
+        res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(seoHtml);
+      } catch (err) {
+        console.error("Production SEO HTML render error:", err);
+        res.sendFile(path.join(distPath, "index.html"));
+      }
     });
   }
 

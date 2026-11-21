@@ -71,6 +71,12 @@ const SECTOR_30_DAY_TREND_DATA = [
 interface LiveIndiaJobsEngineProps {
   memory: CareerMemory;
   onApplyOrPrepWithAI?: (jobTitle: string, sector: string) => void;
+  initialFilter?: {
+    sector?: string;
+    location?: string;
+    search?: string;
+    qualification?: string;
+  };
 }
 
 const DEFAULT_ALERTS: JobAlertSubscription[] = [
@@ -105,18 +111,32 @@ const DEFAULT_ALERTS: JobAlertSubscription[] = [
 export const LiveIndiaJobsEngine: React.FC<LiveIndiaJobsEngineProps> = ({
   memory,
   onApplyOrPrepWithAI,
+  initialFilter,
 }) => {
   // State
   const [jobs, setJobs] = useState<LiveIndiaJob[]>(INITIAL_LIVE_INDIA_JOBS);
   const [loading, setLoading] = useState(false);
   const [chartViewStyle, setChartViewStyle] = useState<"area" | "bar">("area");
 
-  // Filters
-  const [selectedSector, setSelectedSector] = useState<string>("All"); // "All" | "Government" | "Private" | "Banking" | "PSU"
+  // Filters (auto-synced with Pan-India SEO city, govt exam, and qualification URLs)
+  const [selectedSector, setSelectedSector] = useState<string>(initialFilter?.sector || "All");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [stateLocation, setStateLocation] = useState("All India");
-  const [qualification, setQualification] = useState("Any");
+  const [searchQuery, setSearchQuery] = useState(initialFilter?.search || "");
+  const [stateLocation, setStateLocation] = useState(initialFilter?.location || "All India");
+  const [qualification, setQualification] = useState(initialFilter?.qualification || "Any");
+
+  useEffect(() => {
+    if (!initialFilter) return;
+    if (initialFilter.sector !== undefined) setSelectedSector(initialFilter.sector);
+    if (initialFilter.location !== undefined) setStateLocation(initialFilter.location);
+    if (initialFilter.search !== undefined) setSearchQuery(initialFilter.search);
+    if (initialFilter.qualification !== undefined) setQualification(initialFilter.qualification);
+  }, [
+    initialFilter?.sector,
+    initialFilter?.location,
+    initialFilter?.search,
+    initialFilter?.qualification,
+  ]);
 
   const [aiPrepModalJob, setAiPrepModalJob] = useState<LiveIndiaJob | null>(null);
 

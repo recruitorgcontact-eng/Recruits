@@ -522,8 +522,8 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
       location: newMilestoneForm.location || "Odisha, India",
       title: newMilestoneForm.title,
       category: newMilestoneForm.category,
-      featureUsed: newMilestoneForm.featureUsed || "Arohi AI Career Assistant",
-      quote: newMilestoneForm.quote || "Arohi Career AI helped me land my dream role!",
+      featureUsed: newMilestoneForm.featureUsed || "Arohi Career Companion",
+      quote: newMilestoneForm.quote || "Recruits.org.in and Arohi helped me land my dream role!",
       metric: newMilestoneForm.metric || "Career Milestone Unlocked",
       timeAgo: "Just Now",
       congratulations: 1,
@@ -608,25 +608,29 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               <div className="inline-flex items-center gap-2 bg-white/75 backdrop-blur-xl border border-white/90 text-indigo-700 text-[11px] font-bold px-3.5 py-1 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                 <span>
-                  Powered by{" "}
+                  <span className="font-extrabold tracking-tight text-slate-950">RECRUITS.ORG.IN</span>{" "}
+                  • Powered by{" "}
                   <a
                     href="https://arohiai.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-700 underline font-extrabold hover:text-indigo-950"
                   >
-                    arohiai.com
+                    Arohi
                   </a>{" "}
-                  • Quench Research Labs Private Limited
+                  (Quench Research Labs)
                 </span>
               </div>
 
-              <div className="space-y-1.5">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.035em] leading-none bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
-                  RECRUITS.ORG.IN
+              <div className="space-y-2.5">
+                <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-extrabold tracking-[-0.04em] leading-[1.06] text-slate-950">
+                  Where India Trains.
+                  <span className="block bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+                    Where India Gets Hired.
+                  </span>
                 </h1>
-                <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-extrabold text-slate-950 tracking-[-0.025em] leading-snug">
-                  India&apos;s Smartest AI Job Search, Skilling &amp; Campus Placement Hub
+                <h2 className="text-sm sm:text-base md:text-[1.05rem] font-bold text-slate-700 tracking-[-0.015em] leading-snug">
+                  100,000+ Live Govt &amp; MNC Opportunities • 10 Rigorous Placement Programs • Powered by Arohi
                 </h2>
               </div>
 
@@ -2034,7 +2038,7 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
               Community Success & Job Placements
             </h2>
             <p className="text-xs sm:text-sm text-slate-300">
-              Live, anonymized exam clearances, corporate offers, and ATS resume improvements achieved by candidates using Arohi Career AI.
+              Live, anonymized exam clearances, corporate offers, and ATS resume improvements achieved by candidates on Recruits.org.in with Arohi.
             </p>
           </div>
 

@@ -32,12 +32,19 @@ import { ArohiFloatingAgent } from "./components/ArohiFloatingAgent";
 import { AuthModal } from "./components/AuthModal";
 import { Footer } from "./components/Footer";
 import { stopSpeech } from "./utils/speech";
+import { getEnginePath, resolveSeoRoute } from "./seo/panIndiaSeo";
+import { applyClientSeoMetadata } from "./utils/seoClient";
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<"landing" | "workspace">("landing");
-  const [roleMode, setRoleMode] = useState<UserRoleMode>("candidate");
-  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
-  const [activeEngineId, setActiveEngineId] = useState<string>("liveindiajobs");
+  const initialRoute =
+    typeof window !== "undefined" ? resolveSeoRoute(window.location.pathname) : resolveSeoRoute("/");
+
+  const [currentView, setCurrentView] = useState<"landing" | "workspace">(initialRoute.view);
+  const [roleMode, setRoleMode] = useState<UserRoleMode>(initialRoute.roleMode);
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(initialRoute.langCode);
+  const [activeEngineId, setActiveEngineId] = useState<string>(initialRoute.engineId);
+  const [activePath, setActivePath] = useState<string>(initialRoute.canonicalPath);
+  const activeRouteMeta = resolveSeoRoute(activePath);
 
   const [careerMemory, setCareerMemory] = useState<CareerMemory>(() =>
     loadCareerMemoryFromStorage()
@@ -89,6 +96,63 @@ export default function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isCalculatingScore, setIsCalculatingScore] = useState(false);
 
+  // Sync client-side SEO head tags, language & JSON-LD with current URL and handle browser Back/Forward
+  const navigateToCleanPath = (targetPath: string, replace = false) => {
+    const resolved = resolveSeoRoute(targetPath);
+    setCurrentView(resolved.view);
+    setRoleMode(resolved.roleMode);
+    setActiveEngineId(resolved.engineId);
+    setActivePath(resolved.canonicalPath);
+    if (resolved.langCode) {
+      setSelectedLanguage(resolved.langCode);
+    }
+    if (typeof window !== "undefined") {
+      if (window.location.pathname !== resolved.canonicalPath) {
+        if (replace) {
+          window.history.replaceState({}, "", resolved.canonicalPath);
+        } else {
+          window.history.pushState({}, "", resolved.canonicalPath);
+        }
+      }
+      applyClientSeoMetadata(resolved.canonicalPath);
+    }
+  };
+
+  const navigateToEngineRoute = (engineId: string, modeOverride?: UserRoleMode) => {
+    const resolvedRole = modeOverride || (engineId === "recruiter" ? "recruiter" : roleMode);
+    const nextPath = getEnginePath(engineId, resolvedRole);
+    setRoleMode(resolvedRole);
+    setActiveEngineId(engineId);
+    setCurrentView("workspace");
+    setActivePath(nextPath);
+    if (typeof window !== "undefined") {
+      if (window.location.pathname !== nextPath) {
+        window.history.pushState({}, "", nextPath);
+      }
+      applyClientSeoMetadata(nextPath);
+    }
+  };
+
+  useEffect(() => {
+    applyClientSeoMetadata(activePath);
+  }, [activePath]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const resolved = resolveSeoRoute(window.location.pathname);
+      setCurrentView(resolved.view);
+      setRoleMode(resolved.roleMode);
+      setActiveEngineId(resolved.engineId);
+      setActivePath(resolved.canonicalPath);
+      if (resolved.langCode) {
+        setSelectedLanguage(resolved.langCode);
+      }
+      applyClientSeoMetadata(resolved.canonicalPath);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const handleStopSpeech = () => {
     stopSpeech();
     setIsSpeaking(false);
@@ -96,10 +160,14 @@ export default function App() {
 
   const handleRoleModeChange = (newMode: UserRoleMode) => {
     setRoleMode(newMode);
-    if (newMode === "recruiter") {
-      setActiveEngineId("recruiter");
-    } else {
-      setActiveEngineId("navigator");
+    const nextEngine = newMode === "recruiter" ? "recruiter" : "navigator";
+    setActiveEngineId(nextEngine);
+    if (currentView === "workspace") {
+      const nextPath = getEnginePath(nextEngine, newMode);
+      setActivePath(nextPath);
+      if (typeof window !== "undefined" && window.location.pathname !== nextPath) {
+        window.history.pushState({}, "", nextPath);
+      }
     }
   };
 
@@ -129,7 +197,12 @@ export default function App() {
   const renderActiveEngine = () => {
     switch (activeEngineId) {
       case "liveindiajobs":
-        return <LiveIndiaJobsEngine memory={careerMemory} />;
+        return (
+          <LiveIndiaJobsEngine
+            memory={careerMemory}
+            initialFilter={activeRouteMeta.autoFilter}
+          />
+        );
       case "pathvisualizer":
         return (
           <CareerPathVisualizerEngine
@@ -196,7 +269,12 @@ export default function App() {
       case "skillgap":
         return <SkillGapEngine memory={careerMemory} />;
       case "learning":
-        return <LearningAdvisorEngine memory={careerMemory} />;
+        return (
+          <LearningAdvisorEngine
+            memory={careerMemory}
+            initialProgramId={activeRouteMeta.autoFilter?.courseId}
+          />
+        );
       case "salary":
         return <SalaryIntelligenceEngine memory={careerMemory} />;
       case "mentor":
@@ -241,19 +319,22 @@ export default function App() {
         isSpeaking={isSpeaking}
         onStopSpeech={handleStopSpeech}
         currentView={currentView}
-        onToggleView={setCurrentView}
+        onToggleView={(view) => {
+          if (view === "landing") {
+            navigateToCleanPath("/");
+          } else {
+            navigateToEngineRoute(activeEngineId);
+          }
+        }}
         onOpenAuthModal={(role) => {
           if (role) setAuthInitialRole(role);
           setIsAuthModalOpen(true);
         }}
         onOpenRecruiterJobPosting={() => {
-          setRoleMode("recruiter");
-          setActiveEngineId("recruiter");
-          setCurrentView("workspace");
+          navigateToCleanPath("/post-job-free");
         }}
         onNavigateToEngine={(engineId) => {
-          setActiveEngineId(engineId);
-          setCurrentView("workspace");
+          navigateToEngineRoute(engineId);
         }}
       />
 
@@ -262,9 +343,8 @@ export default function App() {
         {currentView === "landing" ? (
           <HeroLandingPage
             onEnterWorkspace={(engineId, mode) => {
-              if (mode) handleRoleModeChange(mode);
-              if (engineId) setActiveEngineId(engineId);
-              setCurrentView("workspace");
+              const targetEngine = engineId || (mode === "recruiter" ? "recruiter" : activeEngineId);
+              navigateToEngineRoute(targetEngine, mode);
             }}
             selectedLanguage={selectedLanguage}
             onLanguageChange={setSelectedLanguage}
@@ -275,7 +355,7 @@ export default function App() {
             <WelcomeBanner
               roleMode={roleMode}
               selectedLanguage={selectedLanguage}
-              onSelectEngine={(id) => setActiveEngineId(id)}
+              onSelectEngine={(id) => navigateToEngineRoute(id)}
               isSpeaking={isSpeaking}
               setIsSpeaking={setIsSpeaking}
             />
@@ -283,9 +363,50 @@ export default function App() {
             {/* Specialized AI Engine Navigation Tabs */}
             <EngineSelector
               activeEngineId={activeEngineId}
-              onSelectEngine={(id) => setActiveEngineId(id)}
+              onSelectEngine={(id) => navigateToEngineRoute(id)}
               roleMode={roleMode}
             />
+
+            {/* Route-Matched SEO Breadcrumb & Context Bar (1-to-1 DOM Alignment for Pan-India City, Exam, Course & Regional Hubs) */}
+            {(activeRouteMeta.citySlug ||
+              activeRouteMeta.examSlug ||
+              activeRouteMeta.categorySlug ||
+              activeRouteMeta.courseSlug ||
+              activeRouteMeta.langCode !== "en") && (
+              <div className="mb-4 glass-apple-card rounded-2xl px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="space-y-1">
+                  <nav aria-label="Breadcrumb" className="flex items-center flex-wrap gap-1.5 text-[11px] font-semibold text-slate-500">
+                    {activeRouteMeta.breadcrumbs.map((crumb, idx) => (
+                      <React.Fragment key={crumb.path}>
+                        {idx > 0 && <span className="text-slate-400">/</span>}
+                        <a
+                          href={crumb.path}
+                          onClick={(e) => {
+                            if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                              e.preventDefault();
+                              navigateToCleanPath(crumb.path);
+                            }
+                          }}
+                          className={
+                            idx === activeRouteMeta.breadcrumbs.length - 1
+                              ? "text-indigo-700 font-bold"
+                              : "hover:text-slate-900 transition"
+                          }
+                        >
+                          {crumb.name}
+                        </a>
+                      </React.Fragment>
+                    ))}
+                  </nav>
+                  <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-950">
+                    {activeRouteMeta.visibleHeading}
+                  </h2>
+                  <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                    {activeRouteMeta.visibleSubtitle}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Render Selected Engine Module in Frosted Apple Liquid Glass Shell */}
             <div className="glass-apple rounded-[2rem] p-4 sm:p-6 lg:p-7 transition-all duration-300 relative overflow-hidden">
@@ -300,13 +421,15 @@ export default function App() {
       {/* Global Corporate Footer (Quench Research Labs Private Limited & ArohiAI.com) */}
       <Footer
         onNavigateToEngine={(engineId, role) => {
-          if (role) handleRoleModeChange(role);
-          setActiveEngineId(engineId);
-          setCurrentView("workspace");
+          navigateToEngineRoute(engineId, role);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         onNavigateHome={() => {
-          setCurrentView("landing");
+          navigateToCleanPath("/");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onNavigatePath={(path) => {
+          navigateToCleanPath(path);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
       />
@@ -316,7 +439,7 @@ export default function App() {
         careerScore={careerScore}
         isOpen={isScoreModalOpen}
         onClose={() => setIsScoreModalOpen(false)}
-        onSelectEngine={(id) => setActiveEngineId(id)}
+        onSelectEngine={(id) => navigateToEngineRoute(id)}
         onRefreshScore={handleRefreshScore}
         isCalculating={isCalculatingScore}
       />
@@ -337,9 +460,7 @@ export default function App() {
         initialRole={authInitialRole}
         onAuthSuccess={(profile) => {
           if (profile.role === "recruiter") {
-            setRoleMode("recruiter");
-            setActiveEngineId("recruiter");
-            setCurrentView("workspace");
+            navigateToEngineRoute("recruiter", "recruiter");
           } else {
             setRoleMode("candidate");
             if (profile.name) {
