@@ -1281,24 +1281,24 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
           <div className="lg:col-span-5 flex flex-col justify-between gap-5">
             <div
               onClick={() => onEnterWorkspace("interview")}
-              className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 h-44 sm:h-[180px] cursor-pointer shadow-md hover:shadow-xl transition"
+              className="group relative rounded-2xl overflow-hidden border border-white/30 bg-slate-950 h-44 sm:h-[180px] cursor-pointer shadow-md hover:shadow-xl transition"
             >
               <img
-                src={BRANDING_IMAGES.aiInterviewCoachingStudio}
-                alt="1-on-1 AI Voice Mock Interview and Coaching Studio"
+                src={BRANDING_IMAGES.arohiVoiceAurora}
+                alt="Arohi 9-Language Voice AI Mock Interview Studio"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent" />
               <div className="absolute bottom-3.5 left-4 right-4 text-white space-y-1">
                 <span className="text-[10px] font-extrabold text-cyan-300 uppercase tracking-wider block">
-                  Multilingual Voice Interview Studio
+                  Arohi • 9-Language Voice AI Studio
                 </span>
                 <h4 className="text-sm sm:text-base font-black leading-snug">
-                  Practice 1-on-1 HR &amp; Technical Board Interviews in English, Hindi &amp; Odia
+                  Practice 1-on-1 HR &amp; Board Interviews in Hindi, Odia, Tamil, Telugu &amp; More
                 </h4>
                 <span className="text-[11px] font-bold text-amber-300 inline-flex items-center gap-1">
-                  Enter Interview Studio <ArrowRight className="w-3 h-3" />
+                  Enter Voice Studio <ArrowRight className="w-3 h-3" />
                 </span>
               </div>
             </div>
@@ -1328,6 +1328,90 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
                   Book Campus Partnership Slot <ArrowRight className="w-3 h-3" />
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CREATIVE 3-CARD PAN-INDIA & NEXT-GEN CAREERS VISUAL GALLERY */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-1">
+          <div
+            onClick={() => onEnterWorkspace("liveindiajobs")}
+            className="group relative rounded-2xl overflow-hidden border border-white/25 bg-slate-950 h-56 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
+          >
+            <img
+              src={BRANDING_IMAGES.panIndiaNetworkGlass}
+              alt="Pan-India Hiring Network Connecting 24 Major Indian Cities and All States"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/35 to-transparent" />
+            <div className="absolute top-3 left-3">
+              <span className="bg-slate-950/75 backdrop-blur-md text-sky-300 border border-sky-400/35 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                All-India • 24 City Hubs
+              </span>
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
+              <h4 className="text-sm sm:text-base font-extrabold leading-snug">
+                Pan-India Govt, PSU &amp; MNC Talent Network
+              </h4>
+              <p className="text-[11px] text-slate-300 line-clamp-2">
+                Bengaluru, Hyderabad, Mumbai, Delhi NCR, Pune, Chennai, Kolkata, Bhubaneswar &amp; 9 Indian languages.
+              </p>
+            </div>
+          </div>
+
+          <div
+            onClick={() => {
+              sessionStorage.setItem("arohi_learning_tab_handoff", "programs");
+              onEnterWorkspace("learning");
+            }}
+            className="group relative rounded-2xl overflow-hidden border border-white/25 bg-slate-950 h-56 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
+          >
+            <img
+              src={BRANDING_IMAGES.genaiNeuralPrism}
+              alt="Generative AI, Autonomous Agents and Data Science Neural Labs"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/35 to-transparent" />
+            <div className="absolute top-3 left-3">
+              <span className="bg-slate-950/75 backdrop-blur-md text-indigo-300 border border-indigo-400/35 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                Verified 180-Hour LMS
+              </span>
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
+              <h4 className="text-sm sm:text-base font-extrabold leading-snug">
+                Generative AI, Agentic Systems &amp; Cloud Labs
+              </h4>
+              <p className="text-[11px] text-slate-300 line-clamp-2">
+                Time-enforced workbooks, real TODO engineering labs, proctored exams &amp; physical mentor sign-offs.
+              </p>
+            </div>
+          </div>
+
+          <div
+            onClick={() => onEnterWorkspace("liveindiajobs")}
+            className="group relative rounded-2xl overflow-hidden border border-white/25 bg-slate-950 h-56 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
+          >
+            <img
+              src={BRANDING_IMAGES.remoteTechEditorial}
+              alt="Work From Home and Modern Indian Software Engineering Careers"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/35 to-transparent" />
+            <div className="absolute top-3 left-3">
+              <span className="bg-slate-950/75 backdrop-blur-md text-amber-300 border border-amber-400/35 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                Remote &amp; Direct Hiring
+              </span>
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
+              <h4 className="text-sm sm:text-base font-extrabold leading-snug">
+                Work-From-Home, Fresher &amp; Global Tech Roles
+              </h4>
+              <p className="text-[11px] text-slate-300 line-clamp-2">
+                Direct employer drives with free ATS resume scoring and real CTC salary intelligence.
+              </p>
             </div>
           </div>
         </div>
@@ -2050,6 +2134,28 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             <Plus className="w-4 h-4 text-slate-950 stroke-[3]" />
             <span>Share Your Success Story</span>
           </button>
+        </div>
+
+        {/* DAY-ONE CORPORATE PLACEMENT EDITORIAL BANNER */}
+        <div className="relative z-10 rounded-3xl overflow-hidden border border-white/15 bg-slate-950 h-48 sm:h-56 group">
+          <img
+            src={BRANDING_IMAGES.placementOfferMilestone}
+            alt="Recruits.org.in graduates stepping into Day One at leading Indian MNC headquarters"
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/92 via-slate-950/55 to-slate-950/15" />
+          <div className="absolute inset-0 p-5 sm:p-7 flex flex-col justify-end sm:justify-center max-w-xl space-y-2">
+            <span className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-200 text-[10px] font-extrabold uppercase tracking-wider">
+              Day One • Verified MNC &amp; Govt Offers
+            </span>
+            <h3 className="text-lg sm:text-2xl font-black text-white leading-tight">
+              From First Verified Module to Corporate Lanyard
+            </h3>
+            <p className="text-xs text-slate-200 leading-relaxed hidden sm:block">
+              Thousands of graduates across India turn disciplined skill hours, ATS-ready resumes, and Arohi board prep into verified offers every quarter.
+            </p>
+          </div>
         </div>
 
         {/* CATEGORY FILTERS */}

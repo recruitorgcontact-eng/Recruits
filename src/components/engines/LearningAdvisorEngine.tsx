@@ -53,7 +53,7 @@ import { CareerMemory, CourseRecommendation } from "../../types";
 import { OFFICIAL_COURSE_MODULES, CourseModuleItem } from "../../data/officialCourseModules";
 import { speakText, stopSpeech } from "../../utils/speech";
 import { CompanyBrandLogo, FEATURED_MNC_BRANDS } from "../CompanyBrandLogo";
-import { BRANDING_IMAGES } from "../../utils/brandingImages";
+import { BRANDING_IMAGES, getProgramCoverImage } from "../../utils/brandingImages";
 import {
   buildStructuredUnitsForModule,
   computeModuleGateStatus,
@@ -1114,22 +1114,22 @@ export const LearningAdvisorEngine: React.FC<LearningAdvisorEngineProps> = ({
           {[
             {
               title: "80% Digital + 20% Physical Classroom",
-              sub: "Interactive AI LMS + Faculty Lab Mentorship",
+              sub: "Interactive Verified LMS + Faculty Lab Mentorship",
               img: BRANDING_IMAGES.hybridClassroomMentorship,
               action: () => setActiveTab("classroom"),
               cta: "Open Verified LMS Classroom →",
             },
             {
-              title: "AI, Data Science & Cloud Innovation Labs",
+              title: "Generative AI, Data Science & Cloud Labs",
               sub: "Real Production Projects Co-Designed with MNCs",
-              img: BRANDING_IMAGES.trackItCloudAiLab,
+              img: BRANDING_IMAGES.genaiNeuralPrism,
               action: () => setActiveTab("programs"),
               cta: "Explore 10 Programs →",
             },
             {
-              title: "100% Campus Placement & Offer Drives",
+              title: "100% Campus Placement & Day-One Offers",
               sub: "Turn Your Institution into a Talent Powerhouse",
-              img: BRANDING_IMAGES.heroCareerGraduates,
+              img: BRANDING_IMAGES.placementOfferMilestone,
               action: () => setActiveTab("institutions"),
               cta: "Partner for 2026–27 →",
             },
@@ -1258,32 +1258,28 @@ export const LearningAdvisorEngine: React.FC<LearningAdvisorEngineProps> = ({
                 return (
                   <div
                     key={prog.id}
-                    className="group glass-vision-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4"
+                    className="group glass-vision-card rounded-2xl overflow-hidden flex flex-col justify-between gap-4"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          {/* Number Pill */}
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 border border-cyan-300/50 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-md tabular-nums">
+                    {/* Bespoke Editorial Course Cover Header */}
+                    <div className="relative h-32 w-full overflow-hidden bg-slate-950 border-b border-white/10">
+                      <img
+                        src={getProgramCoverImage(prog.iconType)}
+                        alt={prog.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-950/15" />
+                      <div className="absolute top-3 left-3.5 right-3.5 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 border border-cyan-300/60 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-md tabular-nums">
                             {prog.number}
                           </div>
-                          {/* Icon Box */}
-                          <div className="w-10 h-10 rounded-xl glass-vision-inset border-indigo-400/30 flex items-center justify-center shrink-0">
-                            {renderProgramIcon(prog.iconType)}
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 block">
-                              {prog.category}
-                            </span>
-                            <h4 className="text-sm sm:text-base font-black text-white group-hover:text-cyan-200 transition">
-                              {prog.title}
-                            </h4>
-                          </div>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-200 bg-slate-950/70 backdrop-blur-md border border-white/15 px-2.5 py-0.5 rounded-full">
+                            {prog.category}
+                          </span>
                         </div>
-
-                        {/* Price Badge Matching Poster Purple Pill */}
-                        <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-fuchsia-600 text-white px-3.5 py-1.5 rounded-xl border border-white/25 text-right shrink-0 shadow-lg">
-                          <span className="text-sm sm:text-base font-black block leading-none tabular-nums">
+                        <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-fuchsia-600 text-white px-3 py-1 rounded-xl border border-white/25 text-right shrink-0 shadow-lg">
+                          <span className="text-sm font-black block leading-none tabular-nums">
                             {prog.feeINR}
                           </span>
                           <span className="text-[9px] text-purple-100 font-semibold">
@@ -1291,6 +1287,18 @@ export const LearningAdvisorEngine: React.FC<LearningAdvisorEngineProps> = ({
                           </span>
                         </div>
                       </div>
+                      <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-slate-950/75 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0">
+                          {renderProgramIcon(prog.iconType)}
+                        </div>
+                        <h4 className="text-sm sm:text-base font-black text-white group-hover:text-cyan-200 transition leading-tight line-clamp-1">
+                          {prog.title}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <div className="px-4 sm:px-5 pb-4 sm:pb-5 flex flex-col justify-between gap-4 flex-1">
+                    <div className="space-y-3">
 
                       {/* Duration & Delivery Badges */}
                       <div className="flex items-center gap-2 flex-wrap text-[11px]">
@@ -1388,6 +1396,7 @@ export const LearningAdvisorEngine: React.FC<LearningAdvisorEngineProps> = ({
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                    </div>
                     </div>
                   </div>
                 );
