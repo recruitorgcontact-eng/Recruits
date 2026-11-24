@@ -135,6 +135,13 @@ export default function App() {
 
   useEffect(() => {
     applyClientSeoMetadata(activePath);
+    if (activePath === "/iti-manufacturing-hiring-chennai" && typeof window !== "undefined") {
+      setTimeout(() => {
+        document
+          .getElementById("iti-manufacturing-hiring")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    }
   }, [activePath]);
 
   useEffect(() => {

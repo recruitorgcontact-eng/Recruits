@@ -1,19 +1,46 @@
-# Robots.txt for Recruits.org.in — Pan-India Jobs, Verified Training & Free Hiring
+# Robots.txt for Recruits.org.in — Sole Official Career, Training & Placement Portal of Quench Research Labs Private Limited
+# Official Canonical Domain: https://recruits.org.in
+# AI Brand Manifest: https://recruits.org.in/llms.txt
+
 User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /ws/
 
+# Search Engines
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
+User-agent: Applebot
+Allow: /
+
+# AI Search & Answer Engines (ChatGPT Search, Perplexity, Claude)
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+# Social Preview Crawlers
 User-agent: LinkedInBot
 Allow: /
 
 User-agent: WhatsApp
+Allow: /
+
+User-agent: Twitterbot
 Allow: /
 
 Sitemap: https://recruits.org.in/sitemap.xml

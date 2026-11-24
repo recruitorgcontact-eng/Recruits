@@ -15,13 +15,27 @@ import {
 } from "./server/arohiMegaPrompt";
 import {
   CANONICAL_DOMAIN,
+  DEFAULT_INDEXNOW_KEY,
+  buildCanonicalLinkHeader,
+  generateLlmsTxt,
   generateRobotsTxt,
   generateSitemapXml,
+  getAllSitemapEntries,
   injectSeoIntoHtml,
 } from "./src/seo/panIndiaSeo";
 
 const app = express();
 const PORT = 3000;
+const INDEXNOW_KEY = (process.env.INDEXNOW_KEY || DEFAULT_INDEXNOW_KEY).trim();
+
+// Canonical Domain Enforcement (301 redirect www.recruits.org.in -> https://recruits.org.in)
+app.use((req, res, next) => {
+  const host = (req.get("host") || "").toLowerCase().split(":")[0];
+  if (host === "www.recruits.org.in" || host === "recruit.org.in" || host === "www.recruit.org.in") {
+    return res.redirect(301, `${CANONICAL_DOMAIN}${req.originalUrl}`);
+  }
+  next();
+});
 
 app.use(express.json({ limit: "20mb" }));
 
@@ -3400,22 +3414,14 @@ Respond with deep technical clarity and warmth. Return ONLY valid JSON:
 // Serve static public assets in both dev and production without intercepting /src/* TypeScript/Vite modules
 app.use("/assets", express.static(path.join(process.cwd(), "public", "assets")));
 
-function resolveSeoBaseUrl(req: express.Request): string {
-  const host = (req.get("host") || "").toLowerCase();
-  if (host.includes("recruits.org.in")) {
-    return CANONICAL_DOMAIN;
-  }
-  if (process.env.APP_URL) {
-    return process.env.APP_URL.replace(/\/+$/, "");
-  }
-  if (host && !host.startsWith("localhost") && !host.startsWith("127.0.0.1")) {
-    const proto = (req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0].trim();
-    return `${proto}://${host}`;
+function resolveSeoBaseUrl(_req?: express.Request): string {
+  if (process.env.CANONICAL_SITE_URL) {
+    return process.env.CANONICAL_SITE_URL.replace(/\/+$/, "");
   }
   return CANONICAL_DOMAIN;
 }
 
-// Dynamic Search Engine Discovery Endpoints (/robots.txt & /sitemap.xml)
+// Dynamic Search Engine & AI-Crawler Discovery Endpoints (/robots.txt, /sitemap.xml, /llms.txt, IndexNow)
 app.get("/robots.txt", (req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=3600");
@@ -3427,6 +3433,72 @@ app.get("/sitemap.xml", (req, res) => {
   res.setHeader("Cache-Control", "public, max-age=3600");
   const db = loadPlatformDB();
   res.send(generateSitemapXml(resolveSeoBaseUrl(req), db.jobs || []));
+});
+
+app.get(["/llms.txt", "/llms-full.txt"], (req, res) => {
+  res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  res.send(generateLlmsTxt(resolveSeoBaseUrl(req)));
+});
+
+// IndexNow Domain Ownership Verification Key File (Bing & ChatGPT Search Instant Indexing)
+app.get(`/${INDEXNOW_KEY}.txt`, (_req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(INDEXNOW_KEY);
+});
+
+// SEO & AI-Indexing Status Inspection Endpoint
+app.get("/api/seo/status", (req, res) => {
+  const baseUrl = resolveSeoBaseUrl(req);
+  const db = loadPlatformDB();
+  const urls = getAllSitemapEntries(baseUrl, db.jobs || []);
+  res.json({
+    canonicalDomain: CANONICAL_DOMAIN,
+    activeBaseUrl: baseUrl,
+    totalIndexedUrls: urls.length,
+    endpoints: {
+      robotsTxt: `${baseUrl}/robots.txt`,
+      sitemapXml: `${baseUrl}/sitemap.xml`,
+      llmsTxt: `${baseUrl}/llms.txt`,
+      indexNowKeyFile: `${baseUrl}/${INDEXNOW_KEY}.txt`,
+      pingIndexNow: `${baseUrl}/api/seo/ping-indexnow`,
+    },
+  });
+});
+
+// Trigger IndexNow Instant Push to Microsoft Bing (directly feeds ChatGPT Search)
+app.post("/api/seo/ping-indexnow", async (req, res) => {
+  try {
+    const targetBase = CANONICAL_DOMAIN;
+    const db = loadPlatformDB();
+    const urlList = getAllSitemapEntries(targetBase, db.jobs || []).map((e) => e.loc);
+    const payload = {
+      host: "recruits.org.in",
+      key: INDEXNOW_KEY,
+      keyLocation: `${targetBase}/${INDEXNOW_KEY}.txt`,
+      urlList,
+    };
+
+    const pingRes = await fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(payload),
+    });
+
+    res.json({
+      ok: pingRes.ok || pingRes.status === 202,
+      indexNowStatus: pingRes.status,
+      host: payload.host,
+      keyLocation: payload.keyLocation,
+      submittedCount: urlList.length,
+    });
+  } catch (err: any) {
+    res.status(502).json({
+      ok: false,
+      error: err?.message || "Failed to contact IndexNow API",
+    });
+  }
 });
 
 // Vite middleware & Static server setup with Per-Route Server-Side SEO Injection
@@ -3468,12 +3540,18 @@ async function startServer() {
         if (!viteServer && viteInitPromise) {
           await viteInitPromise;
         }
+        const baseUrl = resolveSeoBaseUrl(req);
         const rawTemplate = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
-        const seoTemplate = injectSeoIntoHtml(rawTemplate, req.path, resolveSeoBaseUrl(req));
+        const seoTemplate = injectSeoIntoHtml(rawTemplate, req.path, baseUrl);
         const finalHtml = viteServer
           ? await viteServer.transformIndexHtml(req.originalUrl, seoTemplate)
           : seoTemplate;
-        res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(finalHtml);
+        res
+          .status(200)
+          .setHeader("Content-Type", "text/html; charset=utf-8")
+          .setHeader("Link", buildCanonicalLinkHeader(req.path, baseUrl))
+          .setHeader("X-Robots-Tag", "index, follow, max-image-preview:large, max-snippet:-1")
+          .send(finalHtml);
       } catch (err) {
         console.error("Dev SEO HTML render error:", err);
         next(err);
@@ -3487,9 +3565,15 @@ async function startServer() {
         return next();
       }
       try {
+        const baseUrl = resolveSeoBaseUrl(req);
         const rawHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
-        const seoHtml = injectSeoIntoHtml(rawHtml, req.path, resolveSeoBaseUrl(req));
-        res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(seoHtml);
+        const seoHtml = injectSeoIntoHtml(rawHtml, req.path, baseUrl);
+        res
+          .status(200)
+          .setHeader("Content-Type", "text/html; charset=utf-8")
+          .setHeader("Link", buildCanonicalLinkHeader(req.path, baseUrl))
+          .setHeader("X-Robots-Tag", "index, follow, max-image-preview:large, max-snippet:-1")
+          .send(seoHtml);
       } catch (err) {
         console.error("Production SEO HTML render error:", err);
         res.sendFile(path.join(distPath, "index.html"));

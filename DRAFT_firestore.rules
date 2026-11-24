@@ -1,0 +1,201 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net — Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ==================== PRIMITIVE HELPERS ====================
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Zero-read bootstrapped owner check (safe for allow list — no get()/exists() cost explosion)
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'recruit.org.contact@gmail.com';
+    }
+
+    // Full admin check for single-document operations (ordered after auth & static validation)
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // ==================== VALIDATION BLUEPRINTS ====================
+    function isValidItiApplication(data) {
+      return data.keys().hasAll([
+          'applicationRef',
+          'fullName',
+          'mobileNumber',
+          'aadhaarNumber',
+          'aadhaarMasked',
+          'qualification',
+          'itiTrade',
+          'homeState',
+          'district',
+          'collegeName',
+          'consentAccepted',
+          'programSlug',
+          'status',
+          'whatsappShared',
+          'adminNotes',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'applicationRef',
+          'fullName',
+          'mobileNumber',
+          'aadhaarNumber',
+          'aadhaarMasked',
+          'qualification',
+          'itiTrade',
+          'homeState',
+          'district',
+          'collegeName',
+          'consentAccepted',
+          'programSlug',
+          'status',
+          'whatsappShared',
+          'adminNotes',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.applicationRef is string
+        && data.applicationRef.size() >= 10
+        && data.applicationRef.size() <= 32
+        && data.applicationRef.matches('^REC-ITI-[A-Z0-9\\-]{4,24}$')
+        && data.fullName is string
+        && data.fullName.size() >= 2
+        && data.fullName.size() <= 100
+        && data.mobileNumber is string
+        && data.mobileNumber.size() == 10
+        && data.mobileNumber.matches('^[6-9][0-9]{9}$')
+        && data.aadhaarNumber is string
+        && data.aadhaarNumber.size() == 12
+        && data.aadhaarNumber.matches('^[2-9][0-9]{11}$')
+        && data.aadhaarMasked is string
+        && data.aadhaarMasked.size() == 14
+        && data.aadhaarMasked.matches('^XXXX-XXXX-[0-9]{4}$')
+        && data.aadhaarMasked == 'XXXX-XXXX-' + data.aadhaarNumber[8:12]
+        && data.qualification is string
+        && data.qualification.size() <= 20
+        && data.qualification in ['ITI', '12th Pass', '10th Pass']
+        && data.itiTrade is string
+        && data.itiTrade.size() <= 80
+        && data.homeState is string
+        && data.homeState.size() >= 2
+        && data.homeState.size() <= 60
+        && data.district is string
+        && data.district.size() >= 2
+        && data.district.size() <= 80
+        && data.collegeName is string
+        && data.collegeName.size() <= 140
+        && data.consentAccepted is bool
+        && data.consentAccepted == true
+        && data.programSlug is string
+        && data.programSlug.size() <= 64
+        && data.programSlug == 'iti-manufacturing-diploma-chennai'
+        && data.status is string
+        && data.status.size() <= 32
+        && data.status in ['new', 'contacted', 'certificate_received', 'shortlisted', 'joined', 'rejected']
+        && data.whatsappShared is bool
+        && data.adminNotes is string
+        && data.adminNotes.size() <= 500
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['email', 'role', 'createdAt'])
+        && data.keys().hasOnly(['email', 'role', 'createdAt'])
+        && data.email is string
+        && data.email.size() >= 5
+        && data.email.size() <= 120
+        && data.role is string
+        && data.role == 'admin'
+        && data.createdAt is timestamp;
+    }
+
+    function hasImmutableItiFields() {
+      return incoming().applicationRef == existing().applicationRef
+        && incoming().fullName == existing().fullName
+        && incoming().mobileNumber == existing().mobileNumber
+        && incoming().aadhaarNumber == existing().aadhaarNumber
+        && incoming().aadhaarMasked == existing().aadhaarMasked
+        && incoming().qualification == existing().qualification
+        && incoming().itiTrade == existing().itiTrade
+        && incoming().homeState == existing().homeState
+        && incoming().district == existing().district
+        && incoming().collegeName == existing().collegeName
+        && incoming().consentAccepted == existing().consentAccepted
+        && incoming().programSlug == existing().programSlug
+        && incoming().createdAt == existing().createdAt;
+    }
+
+    // ==================== COLLECTION RULES ====================
+
+    // Candidate Registrations for 1,500+ Chennai ITI Manufacturing Hiring + 3-Year Diploma
+    // PII Isolation: Strictly create-only for candidates; reads/lists/updates/deletes limited to verified admins.
+    match /itiApplications/{applicationId} {
+      allow get: if isVerifiedUser() && isValidId(applicationId) && isAdmin();
+      allow list: if isBootstrappedAdmin();
+
+      // Public candidate registration (strictly schema-validated, ID-matched, locked to initial 'new' state & server time)
+      allow create: if isValidId(applicationId)
+        && isValidItiApplication(incoming())
+        && incoming().applicationRef == applicationId
+        && incoming().status == 'new'
+        && incoming().whatsappShared == false
+        && incoming().adminNotes == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      // Action-based admin workflow update (status / notes / WhatsApp certificate tracking only)
+      allow update: if isVerifiedUser()
+        && isValidId(applicationId)
+        && isValidItiApplication(incoming())
+        && isAdmin()
+        && hasImmutableItiFields()
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Admin Pipeline Review
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'whatsappShared', 'adminNotes', 'updatedAt'])
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(applicationId) && isAdmin();
+    }
+
+    // Trusted Admin Registry — Managed exclusively by bootstrapped owner
+    match /admins/{adminUid} {
+      allow get: if isVerifiedUser() && isValidId(adminUid) && (isBootstrappedAdmin() || request.auth.uid == adminUid);
+      allow list: if isBootstrappedAdmin();
+      allow create: if isBootstrappedAdmin()
+        && isValidId(adminUid)
+        && isValidAdminUser(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isBootstrappedAdmin() && isValidId(adminUid);
+    }
+  }
+}

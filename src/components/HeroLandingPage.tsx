@@ -63,6 +63,8 @@ import {
 } from "./engines/LearningAdvisorEngine";
 import { CompanyBrandLogo, FEATURED_MNC_BRANDS } from "./CompanyBrandLogo";
 import { BRANDING_IMAGES } from "../utils/brandingImages";
+import { FirebaseErrorBoundary } from "./FirebaseErrorBoundary";
+import { ItiManufacturingHiringShowcase } from "./ItiManufacturingHiringShowcase";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -692,6 +694,11 @@ export const HeroLandingPage: React.FC<HeroLandingPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* FEATURED FLAGSHIP HIRING DRIVE: 1,500+ CHENNAI ITI MANUFACTURING HIRING + 3-YEAR DIPLOMA */}
+        <FirebaseErrorBoundary>
+          <ItiManufacturingHiringShowcase />
+        </FirebaseErrorBoundary>
 
         {/* HERO MAIN CONTENT GRID */}
         <div ref={heroGridRef} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start will-change-transform">
